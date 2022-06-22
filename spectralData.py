@@ -4,6 +4,7 @@ Created on Mon Apr  4 21:23:25 2022
 
 @author: Jakub
 """
+import pandas as pd
 
 
 class SpectralData():
@@ -21,34 +22,50 @@ class SpectralData():
             self.wav = [0]
         else:
             # initialize temporary arrays
-            store_spc = np.array([])
+            store_spc = []
             self.file_source = []
             self.tf_history = []
 
             # start with first file
             if isinstance(file, str):
-                wav, spc = self.getDataFromFile(file)
+                spc = self.getDataFromFile(file)
             else:
-                wav, spc = self.getDataFromFile(file[0])
+                spc = self.getDataFromFile(file[0])
 
-            if spc.ndim == 1:
-                store_spc = np.concatenate((store_spc, spc))
-            elif spc.ndim == 2:
-                store_spc = np.concatenate((store_spc, spc[:, 0]))
-                store_spc = np.column_stack((store_spc, spc[:, 1:]))
-
-            self._wav_raw = wav
-            self.wav = self._wav_raw
+            store_spc.append(spc)
 
             if not isinstance(file, str) and len(file) > 1:
                 for ii in range(1, len(file)):
-                    wav, spc = self.getDataFromFile(file[ii])
-                    store_spc = np.column_stack((store_spc, spc))
+                    spc = self.getDataFromFile(file[ii])
+                    store_spc.append(spc)
                     # TODO: what if wav is not the same? some kind of pandas merge
 
-            self._spc_raw = pd.DataFrame(store_spc, index=self.wav)
+            combined = pd.concat(store_spc, axis=0, ignore_index=True)
+            combined.sort_index(axis=1, inplace=True)
 
+            for ii in range(1, len(combined.columns) - 1):
+                before = combined.columns[ii] - combined.columns[ii - 1]
+                after = combined.columns[ii + 1] - combined.columns[ii]
+
+                if before < after:
+                    use_1 = ii - 1
+                    use_2 = ii
+                else:
+                    use_1 = ii
+                    use_2 = ii + 1
+
+                comparison = combined.iloc[:, use_1].isna() & ~combined.iloc[:, use_2].isna() | ~combined.iloc[:,
+                                                                                             use_1].isna() & combined.iloc[:,
+                                                                                                             use_2].isna()
+
+                if comparison.all():
+                    combined[combined.columns[use_1]] = combined.iloc[:, use_1].fillna(combined.iloc[:, use_2])
+            combined.dropna(axis=1, inplace=True)
+
+            self._spc_raw = combined
             self.spc = self._spc_raw
+            self._wav_raw = self.spc.columns
+            self.wav = self._wav_raw
             self.war = np.zeros((self.spc.shape[1]))
 
     def getDataFromFile(self, file):
@@ -62,9 +79,7 @@ class SpectralData():
 
         Returns
         -------
-        wav : NP.ARRAY
-            Array of independent wavenumber values
-        spc : NP.ARRAY
+        spc : Pandas dataframe or series
             Array of spectral values, ordered as one spectra per column
 
         """
@@ -72,23 +87,20 @@ class SpectralData():
         ext = os.path.splitext(file)[-1].lower()
         # go through decision tree to get correct import function
         if ext == '.txt':
-            wav, spc = self.readTextFile(file)
+            spc = self.readTextFile(file)
         elif ext == ".spc":
             wav, spc = self.readSPCFile(file)
         elif ext == '.jdx':
             print("J-Camp file import not implemented yet")
             # TODO: figure out j-camp import
         elif ext == '.csv':
-            wav, spc = self.readCSVFile(file)
+            spc = self.readTextFile(file)
         else:
             print("This filetype is not supported")
 
-        if spc.ndim == 1:
-            self.file_source.append(os.path.split(file)[1])
-        elif spc.ndim == 2:
-            self.file_source = self.file_source + [os.path.split(file)[1] for x in range(spc.shape[1])]
+        self.file_source = self.file_source + [os.path.split(file)[1] for x in range(spc.shape[0])]
 
-        return wav, spc
+        return spc
 
     def readTextFile(self, file):
         """
@@ -101,23 +113,38 @@ class SpectralData():
 
         Returns
         -------
-        wav : NP.ARRAY
-            Array of independent wavenumber values
-        spc : NP.ARRAY
-            Array of spectral values, ordered as one spectra per column
+        raw : pandas series or dataframe containing the spectral axis and intensities
 
         """
-        import numpy as np
-        data = np.loadtxt(file)
-        # assuming that there are more data points than spectra, make columnwise
-        if data.shape[0] < data.shape[1]:
-            data = data.transpose()
+        import pandas as pd
+        import csv
 
-        wav = data[:, 0]
-        spc = data[:, 1:]
+        # use csv.Sniffer to determine whether there is a header
+
+        with open(file, 'r') as f:
+            first_three_lines = ''
+            for ii in range(3):
+                first_three_lines = first_three_lines + f.readline()
+            dialect = csv.Sniffer().sniff(first_three_lines)
+            has_header = csv.Sniffer().has_header(first_three_lines)
+            f.close()
+
+        if has_header:
+            head_col = 0
+        else:
+            head_col = None
+
+        raw = pd.read_csv(file, delimiter=dialect.delimiter, header=head_col)
+
+        # assuming that there are more data points than spectra, make row-wise if more rows than columns
+        if raw.shape[0] > raw.shape[1]:
+            # raw.iloc[:,0] = round(raw.iloc[:,0],2)
+            raw = raw.set_index(raw.columns[0]).transpose()
+        else:
+            raw = raw.transpose().set_index(raw.columns[0]).transpose()
 
         # return squeezed spc in case only 1D
-        return wav, np.squeeze(spc);
+        return raw
 
     def readCSVFile(self, file):
         """
@@ -146,7 +173,7 @@ class SpectralData():
         spc = data[:, 1:]
 
         # return squeezed spc in case only 1D
-        return wav, np.squeeze(spc);
+        return wav, np.squeeze(spc)
 
     def readSPCFile(self, file):
         try:
@@ -177,7 +204,7 @@ class SpectralData():
         return wav, np.squeeze(spc)
 
     def plot(self):
-        self.spc.plot()
+        self.spc.transpose().plot()
 
     def reset(self):
         """
@@ -193,12 +220,15 @@ class SpectralData():
         if not isinstance(window, int):
             window = int(window)
 
+        self.spc = self.spc.transpose()
         # first perform the rolling window smooth
         self.spc = self.spc.rolling(window).mean()
 
         # use the NANs to cut the wav and spc matrices
         self.wav = self.wav[self.spc.iloc[:, 0].notna()]
         self.spc = self.spc.dropna()
+
+        self.spc = self.spc.transpose()
 
     def SGSmooth(self, window, poly):
         """
@@ -224,7 +254,7 @@ class SpectralData():
         if not isinstance(poly, int):
             poly = int(poly)
 
-        self.spc = pd.DataFrame(savgol_filter(self.spc, window, poly, axis=0), columns=self.spc.columns,
+        self.spc = pd.DataFrame(savgol_filter(self.spc, window, poly, axis=1), columns=self.spc.columns,
                                 index=self.spc.index)
 
     def SGDeriv(self, window, poly, order):
@@ -236,7 +266,7 @@ class SpectralData():
         if not isinstance(poly, int):
             poly = int(poly)
 
-        self.spc = pd.DataFrame(savgol_filter(self.spc, window, poly, order, axis=0), columns=self.spc.columns,
+        self.spc = pd.DataFrame(savgol_filter(self.spc, window, poly, order, axis=1), columns=self.spc.columns,
                                 index=self.spc.index)
 
     def snv(self):
@@ -249,7 +279,7 @@ class SpectralData():
 
         """
         import numpy as np
-        self.spc = self.spc.apply(lambda x: (x - np.mean(x)) / np.std(x), axis=0)
+        self.spc = self.spc.apply(lambda x: (x - np.mean(x)) / np.std(x), axis=1)
 
     def msc(self, reference=None):
         """
@@ -277,8 +307,8 @@ class SpectralData():
                 ref = self.spc.iloc[:, reference]
 
         for ii in range(self.spc.shape[1]):
-            fit = np.polyfit(ref, self.spc.iloc[:, ii], 1, full=True)
-            self.spc.iloc[:, ii] = (self.spc[ii] - fit[0][1]) / fit[0][0]
+            fit = np.polyfit(ref, self.spc.iloc[ii, :], 1, full=True)
+            self.spc.iloc[ii, :] = (self.spc[ii] - fit[0][1]) / fit[0][0]
 
     def trim(self, start, end):
         if start is None:
@@ -286,8 +316,10 @@ class SpectralData():
         if end is None:
             end = self.spc.index[-1]
 
+        self.spc = self.spc.transpose()
         self.spc = self.spc.loc[(self.spc.index > start) & (self.spc.index < end)]
         self.wav = self.wav[(self.wav > start) & (self.wav < end)]
+        self.spc = self.spc.transpose()
 
     def invtrim(self, start, end):
         if start is None:
@@ -295,29 +327,37 @@ class SpectralData():
         if end is None:
             end = self.spc.index[-1]
 
+        self.spc = self.spc.transpose()
         self.spc = self.spc.loc[(self.spc.index < start) | (self.spc.index > end)]
         self.wav = self.wav[(self.wav < start) | (self.wav > end)]
+        self.spc = self.spc.transpose()
 
     def area(self):
         import numpy as np
-        self.spc = self.spc / self.spc.apply(lambda x: np.trapz(x, self.wav), axis=0)
+        self.spc = self.spc / self.spc.apply(lambda x: np.trapz(x, self.wav), axis=1)
 
     def lastpoint(self):
-        self.spc = self.spc.sub(self.spc.iloc[-1, :])
+        self.spc = self.spc.sub(self.spc.iloc[:, -1], axis=1)
 
     def mean_center(self):
-        self.spc = self.spc.sub(self.spc.mean(axis=0))
+        self.spc = self.spc.sub(self.spc.mean(axis=1))
 
     def peaknorm(self, wavenumber):
+
+        self.spc = self.spc.transpose()
         index = self.spc.index.get_loc(wavenumber, method='nearest')
         self.spc = self.spc.divide(self.spc.iloc[index, :])
+        self.spc = self.spc.transpose()
 
     def vector(self):
-        self.spc = self.spc.divide(((self.spc ** 2).sum(axis=0)) ** (1 / 2))
+        self.spc = self.spc.divide(((self.spc ** 2).sum(axis=1)) ** (1 / 2),axis=1)
 
     def minmax(self, min_val=0, max_val=1):
+
+        self.spc = self.spc.transpose()
         self.spc = min_val + (self.spc.sub(self.spc.min(axis=0))) * (max_val - min_val) / (
                     self.spc.max(axis=0) - self.spc.min(axis=0))
+        self.spc = self.spc.transpose()
 
     def _get_AsLS_baseline(self, y, lam, p, niter):
         # adapted from https://stackoverflow.com/a/50160920
@@ -335,16 +375,7 @@ class SpectralData():
             w = p * (y > z) + (1 - p) * (y < z)
         return z
 
-
-import os
-
-# import cProfile
-
-# files = os.listdir("spectra")
-# files = ["./spectra/" + x for x in files]
-# testData = SpectralData(files)
-
-#file_spc = 'C:/Users/Jakub/OneDrive/Documents/Rutgers/Tsilomelekis/Data/Bioreactor/Bioreactor/P1BR2/Probe 1_P1BR2 1075 15m_20191112-080528/P1BR2 1075 15m_20191112-081817.spc'
-#spc_test = SpectralData((file_spc,))
-
-# nirData = SpectralData(("C:/Users/Jakub/Desktop/NIRSpectra_noHeader.txt",))
+    def polyfit(self, poly, niter=20):
+        for ii in range(self.spc.shape[0]):
+            #todo: polyfit
+            break

@@ -101,7 +101,7 @@ class OOP():
 
     def plot_data(self):
         self.axis.clear()
-        self.axis.plot(self.userData.spc)
+        self.axis.plot(self.userData.spc.transpose())
 
         # make the tick labels bold
         labels = self.axis.get_xticklabels() + self.axis.get_yticklabels()
