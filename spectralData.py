@@ -89,7 +89,7 @@ class SpectralData():
         if ext == '.txt':
             spc = self.readTextFile(file)
         elif ext == ".spc":
-            wav, spc = self.readSPCFile(file)
+            spc = self.readSPCFile(file)
         elif ext == '.jdx':
             print("J-Camp file import not implemented yet")
             # TODO: figure out j-camp import
@@ -200,8 +200,9 @@ class SpectralData():
         temp = []
         for ii in range(f.fnsub):
             temp.append(f.sub[ii].y)
-        spc = np.array(temp).transpose()
-        return wav, np.squeeze(spc)
+        spc = np.array(temp)
+        spc = pd.DataFrame(spc, columns=wav)
+        return spc
 
     def plot(self):
         self.spc.transpose().plot()
@@ -266,8 +267,8 @@ class SpectralData():
         if not isinstance(poly, int):
             poly = int(poly)
 
-        self.spc = pd.DataFrame(savgol_filter(self.spc, window, poly, order, axis=1), columns=self.spc.columns,
-                                index=self.spc.index)
+        self.spc = pd.DataFrame(savgol_filter(self.spc, window_length=window, polyorder=poly, deriv=order, axis=1),
+                                columns=self.spc.columns, index=self.spc.index)
 
     def snv(self):
         """
@@ -297,18 +298,18 @@ class SpectralData():
         """
         import numpy as np
 
-        if reference == None:
-            ref = self.spc.mean(axis=1)
+        if reference is None:
+            ref = self.spc.mean(axis=0)
         else:
             if isinstance(reference, int):
-                ref = self.spc.iloc[:, reference]
+                ref = self.spc.iloc[reference, :]
             else:
                 reference = int(reference)
-                ref = self.spc.iloc[:, reference]
+                ref = self.spc.iloc[reference, :]
 
-        for ii in range(self.spc.shape[1]):
+        for ii in range(self.spc.shape[0]):
             fit = np.polyfit(ref, self.spc.iloc[ii, :], 1, full=True)
-            self.spc.iloc[ii, :] = (self.spc[ii] - fit[0][1]) / fit[0][0]
+            self.spc.iloc[ii, :] = (self.spc.iloc[ii, :] - fit[0][1]) / fit[0][0]
 
     def trim(self, start, end):
         if start is None:
@@ -334,13 +335,13 @@ class SpectralData():
 
     def area(self):
         import numpy as np
-        self.spc = self.spc / self.spc.apply(lambda x: np.trapz(x, self.wav), axis=1)
+        self.spc = self.spc.divide(self.spc.apply(lambda x: np.trapz(x, self.wav), axis=1), axis=0)
 
     def lastpoint(self):
-        self.spc = self.spc.sub(self.spc.iloc[:, -1], axis=1)
+        self.spc = self.spc.sub(self.spc.iloc[:, -1], axis=0)
 
     def mean_center(self):
-        self.spc = self.spc.sub(self.spc.mean(axis=1))
+        self.spc = self.spc.sub(self.spc.mean(axis=1), axis=0)
 
     def peaknorm(self, wavenumber):
 
@@ -350,7 +351,7 @@ class SpectralData():
         self.spc = self.spc.transpose()
 
     def vector(self):
-        self.spc = self.spc.divide(((self.spc ** 2).sum(axis=1)) ** (1 / 2),axis=1)
+        self.spc = self.spc.divide(((self.spc ** 2).sum(axis=1)) ** (1 / 2), axis=0)
 
     def minmax(self, min_val=0, max_val=1):
 

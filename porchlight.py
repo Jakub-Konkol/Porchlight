@@ -18,11 +18,12 @@ from tkinter import messagebox as msg
 from tkinter import filedialog as fd
 from tkinter import Spinbox
 from time import sleep  # careful - this can freeze the GUI
+import pathlib
 
 from functools import partial
 
 from spectralData import SpectralData
-from ToolTip import ToolTip
+#from ToolTip import ToolTip
 
 
 # parameters = {}
@@ -193,8 +194,19 @@ class OOP():
     def progressbar_stop_after(self, wait_ms=1000):
         self.win.after(wait_ms, self.progress_bar.stop)
 
-        # Exit GUI cleanly
+    def export_data(self):
+        ext_options = (("csv", ".csv"),
+                       ("Excel", ".xlsx"),
+                       ("All Files", "."))
+        f_path = fd.asksaveasfilename(filetypes=ext_options, defaultextension=".csv")
+        if f_path is None:
+            return
+        elif pathlib.Path(f_path).suffix == ".csv":
+            self.userData.spc.to_csv(f_path)
+        elif pathlib.Path(f_path).suffix == ".xlsx":
+            self.userData.spc.to_excel(f_path)
 
+    # Exit GUI cleanly
     def _quit(self):
         self.win.quit()
         self.win.destroy()
@@ -301,6 +313,7 @@ class OOP():
         # Add menu items
         file_menu = Menu(menu_bar, tearoff=0)
         file_menu.add_command(label="New")
+        file_menu.add_command(label="Save", command=self.export_data)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self._quit)
         menu_bar.add_cascade(label="File", menu=file_menu)
