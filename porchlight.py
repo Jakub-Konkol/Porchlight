@@ -57,7 +57,7 @@ class OOP():
         self.win.title("Porchlight")
 
         self.categories = {'Trim': ['Trim', 'Inverse Trim'],
-                           # 'Baseline Correction': ['AsLS'],
+                           'Baseline Correction': ['AsLS', 'Polyfit'],
                            'Smoothing': ['Rolling', 'Savitzky-Golay'],
                            'Normalization': ['SNV', 'MSC', 'Area', 'Peak Normalization', 'Vector', 'Min-max'],
                            'Center': ['Mean', 'Last Point'],
@@ -96,7 +96,8 @@ class OOP():
                               'Min-max': self.userData.minmax,
                               'Mean': self.userData.mean_center,
                               'Last Point': self.userData.lastpoint,
-                              'SG Derivative': self.userData.SGDeriv}
+                              'SG Derivative': self.userData.SGDeriv,
+                              'Polyfit' : self.userData.polyfit}
             # 'AsLS': self.userData.asls,
             self.plot_data()
 

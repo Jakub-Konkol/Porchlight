@@ -4,7 +4,6 @@ Created on Mon Apr  4 21:23:25 2022
 
 @author: Jakub
 """
-import pandas as pd
 
 
 class SpectralData():
@@ -55,8 +54,9 @@ class SpectralData():
                     use_2 = ii + 1
 
                 comparison = combined.iloc[:, use_1].isna() & ~combined.iloc[:, use_2].isna() | ~combined.iloc[:,
-                                                                                             use_1].isna() & combined.iloc[:,
-                                                                                                             use_2].isna()
+                                                                                                 use_1].isna() & combined.iloc[
+                                                                                                                 :,
+                                                                                                                 use_2].isna()
 
                 if comparison.all():
                     combined[combined.columns[use_1]] = combined.iloc[:, use_1].fillna(combined.iloc[:, use_2])
@@ -67,6 +67,7 @@ class SpectralData():
             self._wav_raw = self.spc.columns
             self.wav = self._wav_raw
             self.war = np.zeros((self.spc.shape[1]))
+            self.baseline = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
 
     def getDataFromFile(self, file):
         """
@@ -357,7 +358,7 @@ class SpectralData():
 
         self.spc = self.spc.transpose()
         self.spc = min_val + (self.spc.sub(self.spc.min(axis=0))) * (max_val - min_val) / (
-                    self.spc.max(axis=0) - self.spc.min(axis=0))
+                self.spc.max(axis=0) - self.spc.min(axis=0))
         self.spc = self.spc.transpose()
 
     def _get_AsLS_baseline(self, y, lam, p, niter):
@@ -376,7 +377,39 @@ class SpectralData():
             w = p * (y > z) + (1 - p) * (y < z)
         return z
 
-    def polyfit(self, poly, niter=20):
+    def AsLS(self, y, lam, p, niter=20):
+        return
+
+    def polyfit(self, order, niter=20):
+        import numpy as np
+
+        def arrays_equal(a, b):
+            if a.shape != b.shape:
+                return False
+            for ai, bi in zip(a.flat, b.flat):
+                if ai != bi:
+                    return False
+            return True
+
         for ii in range(self.spc.shape[0]):
-            #todo: polyfit
-            break
+            spectrum = self.spc.iloc[ii, :]
+            spc_fit = np.polyfit(spectrum.index, spectrum, order)
+            baseline = np.zeros(spectrum.shape[0])
+            baseline_current = np.polyval(spc_fit, spectrum.index)
+            baseline_previous = np.zeros(baseline.shape)
+            baseline_current = np.where(baseline_current < spectrum, baseline_current, spectrum)
+            index = 0
+
+            baseline_previous = np.zeros(baseline.shape)
+            baseline_current = np.where(baseline_current < spectrum, baseline_current, spectrum)
+
+            while not arrays_equal(baseline_previous, baseline_current) and index < niter:
+                index += 1
+                baseline_previous = baseline_current
+                spc_fit = np.polyfit(spectrum.index, baseline_previous, order)
+                baseline_current = np.polyval(spc_fit, spectrum.index)
+                baseline_current = np.where(baseline_current < baseline_previous, baseline_current, baseline_previous)
+
+            self.baseline.iloc[ii, :] = baseline_current
+            self.spc.iloc[ii, :] = spectrum - baseline_current
+
