@@ -215,7 +215,7 @@ class SpectralData():
         self.spc = self._spc_raw
         self.wav = self._wav_raw
 
-    def rolling(self, window):
+    def rolling(self, window, *args):
         if window is None:
             print("Warning: no window length supplied. Defaulting to 1.")
             window = 1
@@ -232,7 +232,7 @@ class SpectralData():
 
         self.spc = self.spc.transpose()
 
-    def SGSmooth(self, window, poly):
+    def SGSmooth(self, window, poly, *args):
         """
         Performs Savitzky-GOlay smoothing of the data as implemented by scipy.signal.
 
@@ -259,7 +259,7 @@ class SpectralData():
         self.spc = pd.DataFrame(savgol_filter(self.spc, window, poly, axis=1), columns=self.spc.columns,
                                 index=self.spc.index)
 
-    def SGDeriv(self, window, poly, order):
+    def SGDeriv(self, window, poly, order, *args):
         from scipy.signal import savgol_filter
         import pandas as pd
 
@@ -271,7 +271,7 @@ class SpectralData():
         self.spc = pd.DataFrame(savgol_filter(self.spc, window_length=window, polyorder=poly, deriv=order, axis=1),
                                 columns=self.spc.columns, index=self.spc.index)
 
-    def snv(self):
+    def snv(self, *args):
         """
         Performs in-place SNV normalization of data.
 
@@ -283,7 +283,7 @@ class SpectralData():
         import numpy as np
         self.spc = self.spc.apply(lambda x: (x - np.mean(x)) / np.std(x), axis=1)
 
-    def msc(self, reference=None):
+    def msc(self, reference=None, *args):
         """
         Performs in-place MSC scatter correction of data.
 
@@ -312,18 +312,18 @@ class SpectralData():
             fit = np.polyfit(ref, self.spc.iloc[ii, :], 1, full=True)
             self.spc.iloc[ii, :] = (self.spc.iloc[ii, :] - fit[0][1]) / fit[0][0]
 
-    def trim(self, start, end):
+    def trim(self, start=None, end=None, *args):
         if start is None:
-            start = self.spc.index[0]
+            start = self.spc.columns[0]
         if end is None:
-            end = self.spc.index[-1]
+            end = self.spc.columns[-1]
 
         self.spc = self.spc.transpose()
         self.spc = self.spc.loc[(self.spc.index > start) & (self.spc.index < end)]
         self.wav = self.wav[(self.wav > start) & (self.wav < end)]
         self.spc = self.spc.transpose()
 
-    def invtrim(self, start, end):
+    def invtrim(self, start=None, end=None, *args):
         if start is None:
             start = self.spc.index[0]
         if end is None:
@@ -334,27 +334,27 @@ class SpectralData():
         self.wav = self.wav[(self.wav < start) | (self.wav > end)]
         self.spc = self.spc.transpose()
 
-    def area(self):
+    def area(self, *args):
         import numpy as np
         self.spc = self.spc.divide(self.spc.apply(lambda x: np.trapz(x, self.wav), axis=1), axis=0)
 
-    def lastpoint(self):
+    def lastpoint(self, *args):
         self.spc = self.spc.sub(self.spc.iloc[:, -1], axis=0)
 
-    def mean_center(self):
+    def mean_center(self, *args):
         self.spc = self.spc.sub(self.spc.mean(axis=1), axis=0)
 
-    def peaknorm(self, wavenumber):
+    def peaknorm(self, wavenumber, *args):
 
         self.spc = self.spc.transpose()
         index = self.spc.index.get_loc(wavenumber, method='nearest')
         self.spc = self.spc.divide(self.spc.iloc[index, :])
         self.spc = self.spc.transpose()
 
-    def vector(self):
+    def vector(self, *args):
         self.spc = self.spc.divide(((self.spc ** 2).sum(axis=1)) ** (1 / 2), axis=0)
 
-    def minmax(self, min_val=0, max_val=1):
+    def minmax(self, min_val=0, max_val=1, *args):
 
         self.spc = self.spc.transpose()
         self.spc = min_val + (self.spc.sub(self.spc.min(axis=0))) * (max_val - min_val) / (
@@ -377,10 +377,10 @@ class SpectralData():
             w = p * (y > z) + (1 - p) * (y < z)
         return z
 
-    def AsLS(self, y, lam, p, niter=20):
+    def AsLS(self, y, lam, p, niter=20, *args):
         return
 
-    def polyfit(self, order, niter=20):
+    def polyfit(self, order, niter=20, *args):
         import numpy as np
 
         def arrays_equal(a, b):

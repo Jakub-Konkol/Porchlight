@@ -23,7 +23,7 @@ import pathlib
 from functools import partial
 
 from spectralData import SpectralData
-#from ToolTip import ToolTip
+from ToolTip import ToolTip
 
 
 # parameters = {}
@@ -165,15 +165,10 @@ class OOP():
         self.userData.reset()
         for ii in range(5):
             if self.method[ii].get():
-                if bool(self.optA[ii].get()) & bool(self.optB[ii].get()) & bool(self.optC[ii].get()):
-                    param = (float(self.optA[ii].get()), float(self.optB[ii].get()), float(self.optC[ii].get()))
-                elif bool(self.optA[ii].get()) & bool(self.optB[ii].get()):
-                    param = (float(self.optA[ii].get()), float(self.optB[ii].get()))
-                elif bool(self.optA[ii].get()):
-                    param = (float(self.optA[ii].get()),)
-                else:
-                    param = ()
-
+                param = [self.optA[ii].get(), self.optB[ii].get(), self.optC[ii].get()]
+                print(len(param))
+                param = [float(x) if x != '' else None for x in param]
+                print(len(param))
                 self.functions[self.method[ii].get()](*param)
         self.plot_data()
 
