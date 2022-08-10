@@ -267,6 +267,8 @@ class SpectralData():
             window = int(window)
         if not isinstance(poly, int):
             poly = int(poly)
+        if not isinstance(order, int):
+            poly = int(order)
 
         self.spc = pd.DataFrame(savgol_filter(self.spc, window_length=window, polyorder=poly, deriv=order, axis=1),
                                 columns=self.spc.columns, index=self.spc.index)

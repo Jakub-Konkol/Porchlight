@@ -308,7 +308,7 @@ class OOP():
 
         # Add menu items
         file_menu = Menu(menu_bar, tearoff=0)
-        file_menu.add_command(label="New")
+        file_menu.add_command(label="Load", command=self.select_files)
         file_menu.add_command(label="Save", command=self.export_data)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self._quit)
