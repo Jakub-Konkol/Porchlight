@@ -1,0 +1,9 @@
+#these packages are necessary
+tk
+numpy
+pandas
+scipy
+matplotlib
+
+#this package is optional
+spc_spectra

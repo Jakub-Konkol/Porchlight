@@ -68,9 +68,9 @@ class OOP():
 
     def select_files(self):
         filetypes = (
-            ('CSV Files', '*.csv'),
-            ('SPC Files', '*.spc'),
-            ('Text Files', '*.txt'),
+            ('CSV Files', '*.csv *.CSV'),
+            ('SPC Files', '*.spc *.SPC'),
+            ('Text Files', '*.txt *.TXT'),
             ('All Files', '*.*'))
 
         filenames = fd.askopenfilenames(
@@ -97,7 +97,7 @@ class OOP():
                               'Mean': self.userData.mean_center,
                               'Last Point': self.userData.lastpoint,
                               'SG Derivative': self.userData.SGDeriv,
-                              'Polyfit' : self.userData.polyfit}
+                              'Polyfit': self.userData.polyfit}
             # 'AsLS': self.userData.asls,
             self.plot_data()
 
@@ -142,7 +142,7 @@ class OOP():
 
             if 'Normalization' in norm_check or 'Center' in norm_check:
                 prefix = 'Normalized'
-                yunits = '(a.u.)'
+                #yunits = '(a.u.)'
 
             if invert_x:
                 self.axis.invert_xaxis()
@@ -153,7 +153,7 @@ class OOP():
             self.axis.set_xlabel('Energy', fontweight="bold", fontsize=16)
             self.axis.set_ylabel('Intensity (a.u.)', fontweight="bold", fontsize=16)
 
-        self.fig.tight_layout()
+        #self.fig.tight_layout()
 
         self.canvas.draw()
 
@@ -291,7 +291,7 @@ class OOP():
         self.right_label.grid(column=0, row=0)
 
         # generate the figure
-        self.fig = Figure(figsize=(6, 4))
+        self.fig = Figure(figsize=(6, 4), constrained_layout=True)
         self.axis = self.fig.add_subplot(111)
 
         self.axis.tick_params(axis="y", direction="in", labelsize=14)

@@ -177,6 +177,7 @@ class SpectralData():
         return wav, np.squeeze(spc)
 
     def readSPCFile(self, file):
+        import pandas as pd
         try:
             import spc_spectra
         except:
@@ -268,7 +269,7 @@ class SpectralData():
         if not isinstance(poly, int):
             poly = int(poly)
         if not isinstance(order, int):
-            poly = int(order)
+            order = int(order)
 
         self.spc = pd.DataFrame(savgol_filter(self.spc, window_length=window, polyorder=poly, deriv=order, axis=1),
                                 columns=self.spc.columns, index=self.spc.index)
