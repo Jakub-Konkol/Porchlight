@@ -32,12 +32,97 @@ from ToolTip import ToolTip
 
 class PreprocessSelector(tk.Frame):
     def __init__(self, parent, categories, labels, column, row):
+        # magic something
         super().__init__(parent)
-        box = tk.LabelFrame(parent, text="Preprocessing 1")
-        box.grid(row=row)
-        self.category = ttk.Combobox(box, width=15, state='readonly')
-        self.category['values'] = tuple(self.categories.keys())
 
+        # make the frame of the step
+        box = tk.LabelFrame(parent, text="Preprocessing 1")
+        box.grid(row=row, stick=tk.W)
+
+        #make the category combobox
+        self.category = ttk.Combobox(box, width=15, state='readonly')
+        self.category['values'] = tuple(categories.keys())
+        self.category.grid(column=0, row=1)
+        self.category.bind("<<ComboboxSelected>>", self.update_methods)
+
+        # make the method combobox
+        self.method = ttk.Combobox(box, width=15, state='readonly')
+        self.method.grid(column=1, row=1)
+        self.method.bind("<<ComboboxSelected>>", self.update_labels)
+
+        # bad juju but make an empty dictionary that we'll be appending to later
+        self.opt_labels = []
+        self.options = []
+
+        for ii in range(4):
+            # instantiate the label and entry box
+            # place the label and option into the grid, then remove it
+            # so we can call it later with the options
+            label = ttk.Label(box, text='', width=12)
+            option = ttk.Entry(box, width=12, state='disabled')
+
+            label.grid(column=ii+2, row=0)
+            option.grid(column=ii+2, row=1)
+
+            label.grid_remove()
+            option.grid_remove()
+
+            self.opt_labels.append(label)
+            self.options.append(option)
+
+        # define the categories and label relations
+        self.categories = {'Trim': ['Trim', 'Inverse Trim'],
+                           'Baseline Correction': ['AsLS', 'Polyfit'],
+                           'Smoothing': ['Rolling', 'Savitzky-Golay'],
+                           'Normalization': ['SNV', 'MSC', 'Area', 'Peak Normalization', 'Vector', 'Min-max'],
+                           'Center': ['Mean', 'Last Point'],
+                           'Derivative': ['SG Derivative'],
+                           '': ''}
+
+        self.labels = {"Trim": ["Start", "End"],
+                       "Inverse Trim": ['Start', 'End'],
+                       "AsLS": ["Penalty", "Asymmetry"],
+                       "Polyfit": ["Order", "Iterations"],
+                       "Rolling": ["Window"],
+                       "Savitzky-Golay": ["Window", "Poly. Order"],
+                       'SNV': [],
+                       'MSC': ["Reference"],
+                       'Area': [],
+                       'Peak Normalization': ["Peak position"],
+                       'Vector': [],
+                       'Min-max': ['Min', 'Max'],
+                       'Mean': ['Self'],
+                       'Last Point': [],
+                       'SG Derivative': ['Window', 'Polynomial', 'Deriv. Order'],
+                       '': []}
+
+    def update_methods(self, event):
+        # this will update the method combobox once the category is selected
+        self.method['values'] = tuple(self.categories[self.category.get()])
+        self.method.set('')
+        self.update_labels(None)
+
+    def update_labels(self, event):
+        # this will update the labels and present the option boxes
+        for label, option in zip(self.opt_labels, self.options):
+            label.grid_forget()
+            option.grid_forget()
+            option.config(state='disable')
+            label.config(text='')
+
+        for ii in range(len(self.labels[self.method.get()])):
+            self.opt_labels[ii].grid(row=0, column=ii+2)
+            self.opt_labels[ii].config(text=self.labels[self.method.get()][ii])
+            self.options[ii].grid(row=1, column=ii+2)
+            self.options[ii].config(state='enable')
+
+    def get_pp_function(self):
+        # returns the method name
+        return self.method.get()
+
+    def get_pp_params(self):
+        # returns a list of the parameters passed into the
+        return [float(x.get()) if x.get() != '' else None for x in self.options]
 
 class OOP():
     def __init__(self):  # Initializer method
@@ -349,7 +434,8 @@ class OOP():
             self.labelB[ii] = labelB
             self.labelC[ii] = labelC
 
-        test = PreprocessSelector(parameter_section, self.categories, self.labels, 0, 11)
+        #test = PreprocessSelector(parameter_section, self.categories, self.labels, 0, 11)
+        #test2 = PreprocessSelector(parameter_section, self.categories, self.labels, 0, 12)
 
         self.right_label = ttk.Label(self.right, text='Data Preview')
         self.right_label.grid(column=0, row=0)
