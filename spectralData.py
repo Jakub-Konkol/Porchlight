@@ -344,8 +344,11 @@ class SpectralData():
     def lastpoint(self, *args):
         self.spc = self.spc.sub(self.spc.iloc[:, -1], axis=0)
 
-    def mean_center(self, *args):
-        self.spc = self.spc.sub(self.spc.mean(axis=1), axis=0)
+    def mean_center(self, option=False, *args):
+        if not option:
+            self.spc = self.spc.sub(self.spc.mean(axis=1), axis=0)
+        elif option:
+            self.spc = self.spc.sub(self.spc.mean(axis=0), axis=1)
 
     def peaknorm(self, wavenumber, *args):
 
@@ -358,6 +361,11 @@ class SpectralData():
         self.spc = self.spc.divide(((self.spc ** 2).sum(axis=1)) ** (1 / 2), axis=0)
 
     def minmax(self, min_val=0, max_val=1, *args):
+
+        if min_val is None:
+            min_val = 0
+        if max_val is None:
+            max_val = 1
 
         self.spc = self.spc.transpose()
         self.spc = min_val + (self.spc.sub(self.spc.min(axis=0))) * (max_val - min_val) / (
@@ -385,6 +393,9 @@ class SpectralData():
 
     def polyfit(self, order, niter=20, *args):
         import numpy as np
+
+        if niter is None:
+            niter = 20
 
         def arrays_equal(a, b):
             if a.shape != b.shape:
