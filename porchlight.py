@@ -31,44 +31,14 @@ from ToolTip import ToolTip
 # functions['funcCode'](**parameters)
 
 class PreprocessSelector(tk.Frame):
-    def __init__(self, parent, categories, labels, column, row):
+    def __init__(self, parent, column, row, title='Step'):
         # magic something
         super().__init__(parent)
 
         # make the frame of the step
-        box = tk.LabelFrame(parent, text="Preprocessing 1")
+        box = tk.LabelFrame(parent, text=title)
         box.grid(row=row, stick=tk.W)
 
-        #make the category combobox
-        self.category = ttk.Combobox(box, width=15, state='readonly')
-        self.category['values'] = tuple(categories.keys())
-        self.category.grid(column=0, row=1)
-        self.category.bind("<<ComboboxSelected>>", self.update_methods)
-
-        # make the method combobox
-        self.method = ttk.Combobox(box, width=15, state='readonly')
-        self.method.grid(column=1, row=1)
-        self.method.bind("<<ComboboxSelected>>", self.update_labels)
-
-        # bad juju but make an empty dictionary that we'll be appending to later
-        self.opt_labels = []
-        self.options = []
-
-        for ii in range(4):
-            # instantiate the label and entry box
-            # place the label and option into the grid, then remove it
-            # so we can call it later with the options
-            label = ttk.Label(box, text='', width=12)
-            option = ttk.Entry(box, width=12, state='disabled')
-
-            label.grid(column=ii+2, row=0)
-            option.grid(column=ii+2, row=1)
-
-            label.grid_remove()
-            option.grid_remove()
-
-            self.opt_labels.append(label)
-            self.options.append(option)
 
         # define the categories and label relations
         self.categories = {'Trim': ['Trim', 'Inverse Trim'],
@@ -96,6 +66,38 @@ class PreprocessSelector(tk.Frame):
                        'SG Derivative': ['Window', 'Polynomial', 'Deriv. Order'],
                        '': []}
 
+
+        #make the category combobox
+        self.category = ttk.Combobox(box, width=17, state='readonly')
+        self.category['values'] = tuple(self.categories.keys())
+        self.category.grid(column=0, row=1)
+        self.category.bind("<<ComboboxSelected>>", self.update_methods)
+
+        # make the method combobox
+        self.method = ttk.Combobox(box, width=17, state='readonly')
+        self.method.grid(column=1, row=1)
+        self.method.bind("<<ComboboxSelected>>", self.update_labels)
+
+        # bad juju but make an empty dictionary that we'll be appending to later
+        self.opt_labels = []
+        self.options = []
+
+        for ii in range(4):
+            # instantiate the label and entry box
+            # place the label and option into the grid, then remove it
+            # so we can call it later with the options
+            label = ttk.Label(box, text='', width=12)
+            option = ttk.Entry(box, width=12, state='disabled')
+
+            label.grid(column=ii+2, row=0)
+            option.grid(column=ii+2, row=1)
+
+            label.grid_remove()
+            option.grid_remove()
+
+            self.opt_labels.append(label)
+            self.options.append(option)
+
     def update_methods(self, event):
         # this will update the method combobox once the category is selected
         self.method['values'] = tuple(self.categories[self.category.get()])
@@ -121,8 +123,12 @@ class PreprocessSelector(tk.Frame):
         return self.method.get()
 
     def get_pp_params(self):
-        # returns a list of the parameters passed into the
+        # returns a list of the parameters passed into the entry
         return [float(x.get()) if x.get() != '' else None for x in self.options]
+
+    def get_pp_category(self):
+        # returns the category of the technique
+        return self.category.get()
 
 class OOP():
     def __init__(self):  # Initializer method
@@ -133,30 +139,6 @@ class OOP():
 
         # Add a title
         self.win.title("Porchlight")
-
-        self.categories = {'Trim': ['Trim', 'Inverse Trim'],
-                           'Baseline Correction': ['AsLS', 'Polyfit'],
-                           'Smoothing': ['Rolling', 'Savitzky-Golay'],
-                           'Normalization': ['SNV', 'MSC', 'Area', 'Peak Normalization', 'Vector', 'Min-max'],
-                           'Center': ['Mean', 'Last Point'],
-                           'Derivative': ['SG Derivative'],
-                           '': ''}
-
-        self.labels = {"Trim": ["Start", "End"],
-                       "Inverse Trim": ['Start', 'End'],
-                       "AsLS": ["Penalty", "Asymmetry"],
-                       "Polyfit": ["Order", "Iterations"],
-                       "Rolling": ["Window"],
-                       "Savitzky-Golay": ["Window", "Poly. Order"],
-                       'SNV': [],
-                       'MSC': ["Reference"],
-                       'Area': [],
-                       'Peak Normalization': ["Peak position"],
-                       'Vector': [],
-                       'Min-max': ['Min', 'Max'],
-                       'Mean': ['Self'],
-                       'Last Point': [],
-                       'SG Derivative': ['Window', 'Polynomial', 'Deriv. Order']}
 
         self.create_widgets()
 
@@ -193,7 +175,7 @@ class OOP():
                               'SG Derivative': self.userData.SGDeriv,
                               'Polyfit': self.userData.polyfit}
             # 'AsLS': self.userData.asls,
-            self.perform_preprocessing(None)
+            self.perform_preprocessing()
             self.plot_data()
 
     def plot_data(self):
@@ -231,13 +213,13 @@ class OOP():
                 yunits = ''
 
             norm_check = []
-            for ii in range(5):
-                if self.category[ii].get():
-                    norm_check.append(self.category[ii].get())
+            for step in self.pp_steps:
+                if step.get_pp_function():
+                    norm_check.append(step.get_pp_category())
 
             if 'Normalization' in norm_check or 'Center' in norm_check:
                 prefix = 'Normalized'
-                #yunits = '(a.u.)'
+                yunits = ''
 
             if invert_x:
                 self.axis.invert_xaxis()
@@ -252,54 +234,17 @@ class OOP():
 
         self.canvas.draw()
 
-    def update_methods(self, event, value):
-        self.method[value].set('')
-        self.method[value]['values'] = tuple(self.categories[event.widget.get()])
-
-    def update_labels(self, event, value):
-        #i know this is bad
-        if len(self.labels[event.widget.get()]) == 0:
-            self.labelA[value].config(text='')
-            self.optA[value].config(state='disable')
-            self.labelB[value].config(text='')
-            self.optB[value].config(state='disable')
-            self.labelC[value].config(text='')
-            self.optC[value].config(state='disable')
-            self.perform_preprocessing(None)
-
-        elif len(self.labels[event.widget.get()]) == 1:
-            self.labelA[value].config(text=self.labels[event.widget.get()][0])
-            self.optA[value].config(state='enable')
-            self.labelB[value].config(text='')
-            self.optB[value].config(state='disable')
-            self.labelC[value].config(text='')
-            self.optC[value].config(state='disable')
-
-        elif len(self.labels[event.widget.get()]) == 2:
-            self.labelA[value].config(text=self.labels[event.widget.get()][0])
-            self.optA[value].config(state='enable')
-            self.labelB[value].config(text=self.labels[event.widget.get()][1])
-            self.optB[value].config(state='enable')
-            self.labelC[value].config(text='')
-            self.optC[value].config(state='disable')
-
-        elif len(self.labels[event.widget.get()]) == 3:
-            self.labelA[value].config(text=self.labels[event.widget.get()][0])
-            self.optA[value].config(state='enable')
-            self.labelB[value].config(text=self.labels[event.widget.get()][1])
-            self.optB[value].config(state='enable')
-            self.labelC[value].config(text=self.labels[event.widget.get()][2])
-            self.optC[value].config(state='enable')
-
-    def perform_preprocessing(self, event):
-        print("Performing preprocessing")
+    def perform_preprocessing(self):
         self.userData.reset()
-        for ii in range(5):
-            if self.method[ii].get():
-                param = [self.optA[ii].get(), self.optB[ii].get(), self.optC[ii].get()]
-                param = [float(x) if x != '' else None for x in param]
-                self.functions[self.method[ii].get()](*param)
+        for step in self.pp_steps:
+            if step.get_pp_function():
+                param = step.get_pp_params()
+                self.functions[step.get_pp_function()](*param)
         self.plot_data()
+
+    def add_step(self):
+        pp_step = PreprocessSelector(self.parameter_section, 0, len(self.pp_steps), 'Step'+str(len(self.pp_steps)+1))
+        self.pp_steps.append(pp_step)
 
     # update progressbar in callback loop
     def run_progressbar(self):
@@ -340,7 +285,6 @@ class OOP():
         #####################################################################################
 
     def create_widgets(self):
-
         # set up the left/right frames
         self.left = ttk.Frame(self.win)
         self.left.bind("<ButtonRelease>", lambda x: self.left.focus_set)
@@ -350,11 +294,11 @@ class OOP():
 
         # set up the three panels of left
         setup_section = ttk.LabelFrame(self.left, text='Spectroscopy Type and Load')
-        parameter_section = ttk.LabelFrame(self.left, text='Parameter Selection')
+        self.parameter_section = ttk.LabelFrame(self.left, text='Parameter Selection')
         export_section = ttk.LabelFrame(self.left, text='Export')
 
         setup_section.grid(column=0, row=0)
-        parameter_section.grid(column=0, row=1)
+        self.parameter_section.grid(column=0, row=1)
         export_section.grid(column=0, row=2)
 
         # making the spectroscopy type combobox
@@ -370,72 +314,25 @@ class OOP():
 
         open_button.grid(column=0, row=1)
 
-        # Prepare the variables for the preprocessing selectors
-        self.category_select = [tk.StringVar()] * 5
-        self.method_select = [tk.StringVar()] * 5
-        self.optA_val = [tk.StringVar()] * 5
-        self.optB_val = [tk.StringVar()] * 5
-        self.optC_val = [tk.StringVar()] * 5
+        self.pp_steps = []
 
-        self.optA = {}
-        self.optB = {}
-        self.optC = {}
-        self.category = {}
-        self.method = {}
-
-        self.labelA = {}
-        self.labelB = {}
-        self.labelC = {}
-
-        # This is the preprocessing rows
         for ii in range(5):
-            label_0 = ttk.Label(parameter_section, text="Preprocessing " + str(ii + 1) + ": ")
-            label_0.grid(column=0, row=2*ii + 1)
+            pp_step = PreprocessSelector(self.parameter_section, 0, ii, "Step "+str(ii+1))
+            self.pp_steps.append(pp_step)
 
-            category = ttk.Combobox(parameter_section, width=15, state='readonly')
-            category['values'] = tuple(self.categories.keys())
-            category.grid(column=1, row=2*ii + 1)
-            category.bind("<<ComboboxSelected>>", lambda x, i=ii: self.update_methods(x, i))
+        add_step_button = ttk.Button(
+            self.left,
+            text="Add Step",
+            command=self.add_step
+        )
+        add_step_button.grid(column=0, row=3)
 
-            self.category[ii] = category
+        pp_button = ttk.Button(
+            self.left,
+            text='Apply Preprocessing',
+            command=self.perform_preprocessing)
 
-            method = ttk.Combobox(parameter_section, width=15, state='readonly')
-            method.grid(column=2, row=2*ii + 1)
-            method.bind("<<ComboboxSelected>>", lambda x, i=ii: self.update_labels(x, i))
-
-            self.method[ii] = method
-
-            opt_width = 12
-
-            labelA = ttk.Label(parameter_section, text="", width=opt_width)
-            labelA.grid(column=3, row=2*ii)
-            labelB = ttk.Label(parameter_section, text="", width=opt_width)
-            labelB.grid(column=4, row=2*ii)
-            labelC = ttk.Label(parameter_section, text="", width=opt_width)
-            labelC.grid(column=5, row=2 * ii)
-
-            optA = ttk.Entry(parameter_section, width=opt_width, state='disable')
-            optA.grid(column=3, row=2*ii + 1)
-            optA.bind("<FocusOut>", self.perform_preprocessing)
-
-            optB = ttk.Entry(parameter_section, width=opt_width, state='disable')
-            optB.grid(column=4, row=2*ii + 1)
-            optB.bind("<FocusOut>", self.perform_preprocessing)
-
-            optC = ttk.Entry(parameter_section, width=opt_width, state='disable')
-            optC.grid(column=5, row=2*ii + 1)
-            optC.bind("<FocusOut>", self.perform_preprocessing)
-
-            self.optA[ii] = optA
-            self.optB[ii] = optB
-            self.optC[ii] = optC
-
-            self.labelA[ii] = labelA
-            self.labelB[ii] = labelB
-            self.labelC[ii] = labelC
-
-        #test = PreprocessSelector(parameter_section, self.categories, self.labels, 0, 11)
-        #test2 = PreprocessSelector(parameter_section, self.categories, self.labels, 0, 12)
+        pp_button.grid(column=0, row=4)
 
         self.right_label = ttk.Label(self.right, text='Data Preview')
         self.right_label.grid(column=0, row=0)
