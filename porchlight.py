@@ -12,23 +12,16 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 import tkinter as tk
 from tkinter import ttk
-from tkinter import scrolledtext
 from tkinter import Menu
 from tkinter import messagebox as msg
 from tkinter import filedialog as fd
-from tkinter import Spinbox
 from time import sleep  # careful - this can freeze the GUI
 import pathlib
 
-from functools import partial
-
 from spectralData import SpectralData
-from ToolTip import ToolTip
 
 
-# parameters = {}
-# funcCode = 'snv'
-# functions['funcCode'](**parameters)
+# from ToolTip import ToolTip
 
 class PreprocessSelector(tk.Frame):
     def __init__(self, parent, column, row, title='Step'):
@@ -37,8 +30,7 @@ class PreprocessSelector(tk.Frame):
 
         # make the frame of the step
         box = tk.LabelFrame(parent, text=title)
-        box.grid(row=row, stick=tk.W)
-
+        box.grid(column=column, row=row, stick=tk.W)
 
         # define the categories and label relations
         self.categories = {'Trim': ['Trim', 'Inverse Trim'],
@@ -66,17 +58,18 @@ class PreprocessSelector(tk.Frame):
                        'SG Derivative': ['Window', 'Polynomial', 'Deriv. Order'],
                        '': []}
 
-
-        #make the category combobox
+        # make the category combobox
         self.category = ttk.Combobox(box, width=17, state='readonly')
         self.category['values'] = tuple(self.categories.keys())
-        self.category.grid(column=0, row=1)
+        self.category.grid(column=0, row=1, padx=3, pady=3)
         self.category.bind("<<ComboboxSelected>>", self.update_methods)
+        ttk.Label(box, text='Category', width=17).grid(column=0, row=0, sticky=tk.W)
 
         # make the method combobox
         self.method = ttk.Combobox(box, width=17, state='readonly')
         self.method.grid(column=1, row=1)
         self.method.bind("<<ComboboxSelected>>", self.update_labels)
+        ttk.Label(box, text='Technique', width=17).grid(column=1, row=0, sticky=tk.W)
 
         # bad juju but make an empty dictionary that we'll be appending to later
         self.opt_labels = []
@@ -89,8 +82,8 @@ class PreprocessSelector(tk.Frame):
             label = ttk.Label(box, text='', width=12)
             option = ttk.Entry(box, width=12, state='disabled')
 
-            label.grid(column=ii+2, row=0)
-            option.grid(column=ii+2, row=1)
+            label.grid(column=ii + 2, row=0)
+            option.grid(column=ii + 2, row=1)
 
             label.grid_remove()
             option.grid_remove()
@@ -113,9 +106,9 @@ class PreprocessSelector(tk.Frame):
             label.config(text='')
 
         for ii in range(len(self.labels[self.method.get()])):
-            self.opt_labels[ii].grid(row=0, column=ii+2)
+            self.opt_labels[ii].grid(row=0, column=ii + 2)
             self.opt_labels[ii].config(text=self.labels[self.method.get()][ii])
-            self.options[ii].grid(row=1, column=ii+2)
+            self.options[ii].grid(row=1, column=ii + 2)
             self.options[ii].config(state='enable')
 
     def get_pp_function(self):
@@ -130,7 +123,8 @@ class PreprocessSelector(tk.Frame):
         # returns the category of the technique
         return self.category.get()
 
-class OOP():
+
+class OOP:
     def __init__(self):  # Initializer method
         # Create instance
         self.win = tk.Tk()
@@ -230,7 +224,7 @@ class OOP():
             self.axis.set_xlabel('Energy', fontweight="bold", fontsize=16)
             self.axis.set_ylabel('Intensity (a.u.)', fontweight="bold", fontsize=16)
 
-        #self.fig.tight_layout()
+        # self.fig.tight_layout()
 
         self.canvas.draw()
 
@@ -243,7 +237,8 @@ class OOP():
         self.plot_data()
 
     def add_step(self):
-        pp_step = PreprocessSelector(self.parameter_section, 0, len(self.pp_steps), 'Step'+str(len(self.pp_steps)+1))
+        pp_step = PreprocessSelector(self.parameter_section, 0, len(self.pp_steps),
+                                     'Step' + str(len(self.pp_steps) + 1))
         self.pp_steps.append(pp_step)
 
     # update progressbar in callback loop
@@ -290,16 +285,16 @@ class OOP():
         self.left.bind("<ButtonRelease>", lambda x: self.left.focus_set)
         self.left.grid(column=0, row=0, padx=8, pady=4)
         self.right = ttk.LabelFrame(self.win)
-        self.right.grid(column=1, row=0, padx=8, pady=4, sticky=tk.E+tk.W+tk.N+tk.S)
+        self.right.grid(column=1, row=0, padx=8, pady=4, sticky=tk.E + tk.W + tk.N + tk.S)
 
         # set up the three panels of left
-        setup_section = ttk.LabelFrame(self.left, text='Spectroscopy Type and Load')
-        self.parameter_section = ttk.LabelFrame(self.left, text='Parameter Selection')
-        export_section = ttk.LabelFrame(self.left, text='Export')
+        setup_section = ttk.LabelFrame(self.left, text='Spectra type and load')
+        self.parameter_section = ttk.LabelFrame(self.left, text='Parameter selection')
+        export_section = ttk.LabelFrame(self.left, text='Save and export')
 
         setup_section.grid(column=0, row=0)
         self.parameter_section.grid(column=0, row=1)
-        export_section.grid(column=0, row=2)
+        export_section.grid(column=0, row=4)
 
         # making the spectroscopy type combobox
         self.spectroscopy_type = ttk.Combobox(setup_section, width=15, state='readonly')
@@ -317,7 +312,7 @@ class OOP():
         self.pp_steps = []
 
         for ii in range(5):
-            pp_step = PreprocessSelector(self.parameter_section, 0, ii, "Step "+str(ii+1))
+            pp_step = PreprocessSelector(self.parameter_section, 0, ii, "Step " + str(ii + 1))
             self.pp_steps.append(pp_step)
 
         add_step_button = ttk.Button(
@@ -325,14 +320,14 @@ class OOP():
             text="Add Step",
             command=self.add_step
         )
-        add_step_button.grid(column=0, row=3)
+        add_step_button.grid(column=0, row=2)
 
         pp_button = ttk.Button(
             self.left,
             text='Apply Preprocessing',
             command=self.perform_preprocessing)
 
-        pp_button.grid(column=0, row=4)
+        pp_button.grid(column=0, row=3)
 
         self.right_label = ttk.Label(self.right, text='Data Preview')
         self.right_label.grid(column=0, row=0)
@@ -363,13 +358,12 @@ class OOP():
 
         # Display a Message Box
         def _msgBox():
-            msg.showinfo('Python Message Info Box', 'A Python GUI created using tkinter:\nThe year is 2022.')
+            msg.showinfo('Porchlight Help', 'Porchlight was created by Jakub Konkol and George Tsilomelekis.\nCheck us out at gtsilomelekis.com!')
 
-            # Add another Menu to the Menu Bar and an item
-
+        # Add another Menu to the Menu Bar and an item
         help_menu = Menu(menu_bar, tearoff=0)
         help_menu.add_command(label="About", command=_msgBox)  # display messagebox when clicked
-        menu_bar.add_cascade(label="Help", menu=help_menu)
+        menu_bar.add_cascade(label="This Program", menu=help_menu)
 
         # Change the main windows icon
         self.win.iconbitmap('porchlight.ico')
@@ -380,5 +374,3 @@ class OOP():
 # ======================
 oop = OOP()
 oop.win.mainloop()
-
-
