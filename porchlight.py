@@ -30,7 +30,7 @@ class PreprocessSelector(tk.Frame):
 
         # make the frame of the step
         box = tk.LabelFrame(parent, text=title)
-        box.grid(column=column, row=row, stick=tk.W)
+        box.grid(column=column, row=row, padx=3, pady=3, stick=tk.W)
 
         # define the categories and label relations
         self.categories = {'Trim': ['Trim', 'Inverse Trim'],
@@ -65,13 +65,13 @@ class PreprocessSelector(tk.Frame):
         self.category['values'] = tuple(self.categories.keys())
         self.category.grid(column=0, row=1, padx=3, pady=3)
         self.category.bind("<<ComboboxSelected>>", self.update_methods)
-        ttk.Label(box, text='Category', width=17).grid(column=0, row=0, sticky=tk.W)
+        ttk.Label(box, text='Category', width=17).grid(column=0, row=0, sticky=tk.W, padx=3)
 
         # make the method combobox
         self.method = ttk.Combobox(box, width=17, state='readonly')
         self.method.grid(column=1, row=1)
         self.method.bind("<<ComboboxSelected>>", self.update_labels)
-        ttk.Label(box, text='Technique', width=17).grid(column=1, row=0, sticky=tk.W)
+        ttk.Label(box, text='Technique', width=17).grid(column=1, row=0, sticky=tk.W, padx=3)
 
         # bad juju but make an empty dictionary that we'll be appending to later
         self.opt_labels = []
@@ -83,8 +83,8 @@ class PreprocessSelector(tk.Frame):
             label = ttk.Label(box, text='', width=12)
             option = ttk.Entry(box, width=12, state='disabled')
 
-            label.grid(column=ii + 2, row=0)
-            option.grid(column=ii + 2, row=1)
+            label.grid(column=ii + 2, row=0, padx=2)
+            option.grid(column=ii + 2, row=1, padx=2)
 
             label.grid_remove()
             option.grid_remove()
@@ -129,6 +129,10 @@ class OOP:
     def __init__(self):  # Initializer method
         # Create instance
         self.win = tk.Tk()
+
+        # i like Breeze but not enough to figure out if I can include it
+        # self.win.tk.call("source", "Breeze.tcl")
+        # ttk.Style().theme_use("Breeze")
 
         self.userData = SpectralData()
 
@@ -269,9 +273,9 @@ class OOP:
         if f_path is None:
             return
         elif pathlib.Path(f_path).suffix == ".csv":
-            self.userData.spc.to_csv(f_path)
+            self.userData.spc.transpose().to_csv(f_path)
         elif pathlib.Path(f_path).suffix == ".xlsx":
-            self.userData.spc.to_excel(f_path)
+            self.userData.spc.transpose().to_excel(f_path)
 
     def reset_focus(self):
         # why doesn't this work
@@ -306,7 +310,7 @@ class OOP:
         # making the spectroscopy type combobox
         self.spectroscopy_type = ttk.Combobox(setup_section, width=15, state='readonly')
         self.spectroscopy_type['values'] = ('IR - Transmission', 'IR - Absorbance', 'Raman', 'UV-Vis')
-        self.spectroscopy_type.grid(column=0, row=0)
+        self.spectroscopy_type.grid(column=0, row=0, padx=3, pady=3)
 
         # making the load files button
         open_button = ttk.Button(
@@ -314,7 +318,7 @@ class OOP:
             text='Load Files',
             command=self.select_files)
 
-        open_button.grid(column=0, row=1)
+        open_button.grid(column=0, row=1, padx=3, pady=3)
 
         self.pp_steps = []
 
@@ -327,14 +331,22 @@ class OOP:
             text="Add Step",
             command=self.add_step
         )
-        add_step_button.grid(column=0, row=2)
+        add_step_button.grid(column=0, row=2, padx=2, pady=2)
 
         pp_button = ttk.Button(
             self.left,
             text='Apply Preprocessing',
             command=self.perform_preprocessing)
 
-        pp_button.grid(column=0, row=3)
+        pp_button.grid(column=0, row=3, padx=2, pady=2)
+
+        save_button = ttk.Button(
+            self.left,
+            text="Save data",
+            command=self.export_data
+        )
+
+        save_button.grid(column=0, row=4, padx=2, pady=2)
 
         self.right_label = ttk.Label(self.right, text='Data Preview')
         self.right_label.grid(column=0, row=0)
