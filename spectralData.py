@@ -10,6 +10,7 @@ class SpectralData():
     def __init__(self, file=None):
         import numpy as np
         import pandas as pd
+        import copy
         import re
         import os
 
@@ -63,11 +64,11 @@ class SpectralData():
             combined.dropna(axis=1, inplace=True)
 
             self._spc_raw = combined
-            self.spc = self._spc_raw
-            self._wav_raw = self.spc.columns
-            self.wav = self._wav_raw
+            self.spc = copy.deepcopy(self._spc_raw)
+            self._wav_raw = self.spc.columns[:]
+            self.wav = copy.deepcopy(self._wav_raw)
             self.war = np.zeros((self.spc.shape[1]))
-            self.baseline = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
+            # self.baseline = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
 
     def getDataFromFile(self, file):
         """
@@ -209,12 +210,15 @@ class SpectralData():
     def plot(self):
         self.spc.transpose().plot()
 
-    def reset(self):
+    def reset(self, *args):
         """
         Reset the spectra and wavenumber to raw imported values.
         """
+        # import pandas as pd
+        # import numpy as np
         self.spc = self._spc_raw
         self.wav = self._wav_raw
+        #self.baseline = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
 
     def rolling(self, window, *args):
         if window is None:
@@ -393,6 +397,7 @@ class SpectralData():
 
     def polyfit(self, order, niter=20, *args):
         import numpy as np
+        import pandas as pd
 
         if niter is None:
             niter = 20
@@ -404,6 +409,8 @@ class SpectralData():
                 if ai != bi:
                     return False
             return True
+
+        # self.baseline = pd.DataFrame(np.zeros(self.spc.shape), columns=self.wav)
 
         for ii in range(self.spc.shape[0]):
             spectrum = self.spc.iloc[ii, :]
@@ -424,6 +431,6 @@ class SpectralData():
                 baseline_current = np.polyval(spc_fit, spectrum.index)
                 baseline_current = np.where(baseline_current < baseline_previous, baseline_current, baseline_previous)
 
-            self.baseline.iloc[ii, :] = baseline_current
+            # self.baseline.iloc[ii, :] = baseline_current
             self.spc.iloc[ii, :] = spectrum - baseline_current
 

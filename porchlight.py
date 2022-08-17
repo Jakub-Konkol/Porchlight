@@ -39,6 +39,7 @@ class PreprocessSelector(tk.Frame):
                            'Normalization': ['SNV', 'MSC', 'Area', 'Peak Normalization', 'Vector', 'Min-max'],
                            'Center': ['Mean', 'Last Point'],
                            'Derivative': ['SG Derivative'],
+                           'Dataset': ['Reset'],
                            '': ''}
 
         self.labels = {"Trim": ["Start", "End"],
@@ -56,6 +57,7 @@ class PreprocessSelector(tk.Frame):
                        'Mean': ['Self'],
                        'Last Point': [],
                        'SG Derivative': ['Window', 'Polynomial', 'Deriv. Order'],
+                       'Reset': [],
                        '': []}
 
         # make the category combobox
@@ -76,8 +78,7 @@ class PreprocessSelector(tk.Frame):
         self.options = []
 
         for ii in range(4):
-            # instantiate the label and entry box
-            # place the label and option into the grid, then remove it
+            # instantiate the label and entry box place the label and option into the grid, then remove it
             # so we can call it later with the options
             label = ttk.Label(box, text='', width=12)
             option = ttk.Entry(box, width=12, state='disabled')
@@ -167,7 +168,8 @@ class OOP:
                               'Mean': self.userData.mean_center,
                               'Last Point': self.userData.lastpoint,
                               'SG Derivative': self.userData.SGDeriv,
-                              'Polyfit': self.userData.polyfit}
+                              'Polyfit': self.userData.polyfit,
+                              'Reset': self.userData.reset}
             # 'AsLS': self.userData.asls,
             self.perform_preprocessing()
             self.plot_data()
@@ -271,6 +273,10 @@ class OOP:
         elif pathlib.Path(f_path).suffix == ".xlsx":
             self.userData.spc.to_excel(f_path)
 
+    def reset_focus(self):
+        # why doesn't this work
+        self.win.focus_set()
+
     # Exit GUI cleanly
     def _quit(self):
         self.win.quit()
@@ -282,7 +288,7 @@ class OOP:
     def create_widgets(self):
         # set up the left/right frames
         self.left = ttk.Frame(self.win)
-        self.left.bind("<ButtonRelease>", lambda x: self.left.focus_set)
+        self.left.bind("<ButtonRelease>", lambda x: self.reset_focus)
         self.left.grid(column=0, row=0, padx=8, pady=4)
         self.right = ttk.LabelFrame(self.win)
         self.right.grid(column=1, row=0, padx=8, pady=4, sticky=tk.E + tk.W + tk.N + tk.S)
@@ -294,6 +300,7 @@ class OOP:
 
         setup_section.grid(column=0, row=0)
         self.parameter_section.grid(column=0, row=1)
+        self.parameter_section.bind("<<Button-1>>", self.reset_focus)
         export_section.grid(column=0, row=4)
 
         # making the spectroscopy type combobox
@@ -363,7 +370,7 @@ class OOP:
         # Add another Menu to the Menu Bar and an item
         help_menu = Menu(menu_bar, tearoff=0)
         help_menu.add_command(label="About", command=_msgBox)  # display messagebox when clicked
-        menu_bar.add_cascade(label="This Program", menu=help_menu)
+        menu_bar.add_cascade(label="Help", menu=help_menu)
 
         # Change the main windows icon
         self.win.iconbitmap('porchlight.ico')
