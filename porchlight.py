@@ -39,12 +39,12 @@ class PreprocessSelector(tk.Frame):
                            'Normalization': ['SNV', 'MSC', 'Area', 'Peak Normalization', 'Vector', 'Min-max'],
                            'Center': ['Mean', 'Last Point'],
                            'Derivative': ['SG Derivative'],
-                           'Dataset': ['Reset'],
+                           'Dataset': ['Subtract', 'Reset'],
                            '': ''}
 
         self.labels = {"Trim": ["Start", "End"],
                        "Inverse Trim": ['Start', 'End'],
-                       "AsLS": ["Penalty", "Asymmetry"],
+                       "AsLS": ["Penalty", "Asymmetry", "Iterations"],
                        "Polyfit": ["Order", "Iterations"],
                        "Rolling": ["Window"],
                        "Savitzky-Golay": ["Window", "Poly. Order"],
@@ -58,6 +58,7 @@ class PreprocessSelector(tk.Frame):
                        'Last Point': [],
                        'SG Derivative': ['Window', 'Polynomial', 'Deriv. Order'],
                        'Reset': [],
+                       'Subtract': ['Spectrum'],
                        '': []}
 
         # make the category combobox
@@ -173,14 +174,20 @@ class OOP:
                               'Last Point': self.userData.lastpoint,
                               'SG Derivative': self.userData.SGDeriv,
                               'Polyfit': self.userData.polyfit,
-                              'Reset': self.userData.reset}
-            # 'AsLS': self.userData.asls,
+                              'AsLS': self.userData.AsLS,
+                              'Reset': self.userData.reset,
+                              'Subtract': self.userData.subtract}
             self.perform_preprocessing()
             self.plot_data()
 
     def plot_data(self):
         self.axis.clear()
         self.axis.plot(self.userData.spc.transpose())
+        if self.userData.spc.shape[0] < 10:
+            self.axis.legend([str(x+1) for x in range(self.userData.spc.shape[0])], loc='best', ncol=1)
+        elif self.userData.spc.shape[0] < 20:
+            self.axis.legend([str(x+1) for x in range(self.userData.spc.shape[0])], loc='best', ncol=2)
+
 
         # make the tick labels bold
         labels = self.axis.get_xticklabels() + self.axis.get_yticklabels()

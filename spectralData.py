@@ -63,10 +63,12 @@ class SpectralData():
                     combined[combined.columns[use_1]] = combined.iloc[:, use_1].fillna(combined.iloc[:, use_2])
             combined.dropna(axis=1, inplace=True)
 
-            self._spc_raw = combined
-            self.spc = copy.deepcopy(self._spc_raw)
+            self._spc_raw = combined.copy(deep=True)
+            self.spc = self._spc_raw.copy(deep=True)
+            if self._spc_raw is self.spc:
+                print("True")
             self._wav_raw = self.spc.columns[:]
-            self.wav = copy.deepcopy(self._wav_raw)
+            self.wav = self._wav_raw.copy(deep=True)
             self.war = np.zeros((self.spc.shape[1]))
             # self.baseline = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
 
@@ -216,8 +218,8 @@ class SpectralData():
         """
         # import pandas as pd
         # import numpy as np
-        self.spc = self._spc_raw
-        self.wav = self._wav_raw
+        self.spc = self._spc_raw.copy(deep=True)
+        self.wav = self._wav_raw.copy(deep=True)
         #self.baseline = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
 
     def rolling(self, window, *args):
@@ -382,7 +384,7 @@ class SpectralData():
         from scipy import sparse
         from scipy.sparse.linalg import spsolve
 
-        L = self.spc.shape[0]
+        L = self.spc.shape[1]
         D = sparse.diags([1, -2, 1], [0, -1, -2], shape=(L, L - 2))
         w = np.ones(L)
         for i in range(niter):
@@ -392,8 +394,16 @@ class SpectralData():
             w = p * (y > z) + (1 - p) * (y < z)
         return z
 
-    def AsLS(self, y, lam, p, niter=20, *args):
-        return
+    def AsLS(self, lam, p, niter=20, *args):
+        if niter is None:
+            niter = 20
+        elif not isinstance(niter, int):
+            niter = int(niter)
+
+        for ii in range(self.spc.shape[0]):
+            spectrum = self.spc.iloc[ii, :]
+            self.spc.iloc[ii, :] = spectrum - self._get_AsLS_baseline(spectrum, lam, p, niter)
+
 
     def polyfit(self, order, niter=20, *args):
         import numpy as np
@@ -434,3 +444,14 @@ class SpectralData():
             # self.baseline.iloc[ii, :] = baseline_current
             self.spc.iloc[ii, :] = spectrum - baseline_current
 
+    def subtract(self, spectra, *args):
+        if spectra is None:
+            print("Need to provide a integer for the spectra to subtract by.")
+            return
+        if spectra < 1 or spectra > self.spc.shape[0]+1:
+            print(f"Spectral choice should be between 0 and {self.spc.shape[0]}")
+            return
+        if not isinstance(spectra, int):
+            spectra = int(spectra)
+
+        self.spc = self.spc.sub(self.spc.iloc[spectra-1, :], axis=1)
