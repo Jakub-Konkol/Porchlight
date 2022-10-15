@@ -7,14 +7,15 @@ Created on Mon Apr  4 21:23:25 2022
 
 
 class SpectralData():
+    """
+    Class that handles the loading, storage and manipulation of spectral data.
+    """
     def __init__(self, file=None):
         import numpy as np
         import pandas as pd
-        import copy
-        import re
-        import os
 
         if file is None:
+            # empty initializer if you want to populate the values yourself.
             self._wav_raw = [0]
             self._spc_raw = [0]
             self.war = [0]
@@ -43,6 +44,8 @@ class SpectralData():
             combined = pd.concat(store_spc, axis=0, ignore_index=True)
             combined.sort_index(axis=1, inplace=True)
 
+            # This section tries to rectify abscissa mismatches due to rounding errors. If two adjacent columns have
+            # opposite missing values, then it will combine the columns into one with the mean absissa
             for ii in range(1, len(combined.columns) - 1):
                 before = combined.columns[ii] - combined.columns[ii - 1]
                 after = combined.columns[ii + 1] - combined.columns[ii]
@@ -74,7 +77,8 @@ class SpectralData():
 
     def getDataFromFile(self, file):
         """
-        Perform logic to determine filetype and corresponding import function. Import data and append file to imported_file array to keep track.
+        Perform logic to determine filetype and corresponding import function. Import data and append file to
+        imported_file array to keep track.
 
         Parameters
         ----------
@@ -180,6 +184,13 @@ class SpectralData():
         return wav, np.squeeze(spc)
 
     def readSPCFile(self, file):
+        """
+        Reads .spc file using spc_spectra and returns the spectra as a pandas dataframe.
+        :param file: str
+            Directory of file to be loaded
+        :return: pandas.DataFrame
+            Spectra as a pandas Dataframe
+        """
         import pandas as pd
         try:
             import spc_spectra
@@ -209,6 +220,46 @@ class SpectralData():
         spc = pd.DataFrame(spc, columns=wav)
         return spc
 
+    def readExcelFile(self, file):
+        """
+        Reads Excel file using pandas and returns the spectra as a pandas dataframe
+
+        :param file: str
+            Directory of file
+        :return:
+        """
+
+        # TODO: figure out excel reader
+
+        return
+
+    def readJCAMPFile(self, file):
+        """
+        Reads jcamp file. Figures out if the contents is a vibrational spectrum or an NMR spectrum, then uses the
+        package jcamp or nmrglue respectively.
+
+        :param file: str
+            Directory of file
+        :return:
+
+        """
+
+        # TODO: figure out jcamp reader
+        # need to do some file reading shenenigans where I look for a field called ##DATA TYPE or ##DATATYPE. Maybe re
+        # where I cut out the spaces.
+
+        return
+
+    def readSPAFile(self, file):
+        """
+        Read ThermoFisher SPA files
+
+        :param file:
+        :return:
+        """
+
+        # https://github.com/lerkoah/spa-on-python maybe? no pypi tho
+
     def plot(self):
         self.spc.transpose().plot()
 
@@ -223,6 +274,16 @@ class SpectralData():
         #self.baseline = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
 
     def rolling(self, window, *args):
+        """
+        Performs a rolling (moving window, boxcar) average of the spectra.
+
+        :param window: int
+            Number of datapoints to average together
+        :param args:
+            None
+        :return:
+            None
+        """
         if window is None:
             print("Warning: no window length supplied. Defaulting to 1.")
             window = 1
@@ -241,7 +302,7 @@ class SpectralData():
 
     def SGSmooth(self, window, poly, *args):
         """
-        Performs Savitzky-GOlay smoothing of the data as implemented by scipy.signal.
+        Performs Savitzky-Golay smoothing of the data as implemented by scipy.signal.
 
         Parameters
         ----------
@@ -267,6 +328,20 @@ class SpectralData():
                                 index=self.spc.index)
 
     def SGDeriv(self, window, poly, order, *args):
+        """
+        Performs Savitzky-Golay derivative of spectrum as implemented in scipy.signal
+
+        :param window: int
+            Window length, or number of datapoints to fit polynomial. Must be odd.
+        :param poly: int
+            Polynomial of fitting function
+        :param order: int
+            Order of derivative
+        :param args:
+            None
+        :return:
+            None
+        """
         from scipy.signal import savgol_filter
         import pandas as pd
 
@@ -299,7 +374,8 @@ class SpectralData():
         Parameters
         ----------
         reference : INT, optional
-            The value of the spectra to be fitted to. If none is provided, the average spectrum is used. The default is None.
+            The value of the spectra to be fitted to. If none is provided, the average spectrum is used. The default is
+            None.
 
         Returns
         -------
@@ -322,6 +398,20 @@ class SpectralData():
             self.spc.iloc[ii, :] = (self.spc.iloc[ii, :] - fit[0][1]) / fit[0][0]
 
     def trim(self, start=None, end=None, *args):
+        """
+        Takes a start and an end parameter for the energy axis and keeps the spectral columns that are inclusive of the
+        range.
+
+        Example: spc columns are [1, 2, 3, 4, 5]. trim(start=2, end=4) will keep only columns [2, 3, 4].
+
+        :param start: float
+            Axis value to start keeping
+        :param end: float
+            Axis value to end keeping
+        :param args:
+            None
+        :return: None
+        """
         if start is None:
             start = self.spc.columns[0]
         if end is None:
@@ -333,6 +423,20 @@ class SpectralData():
         self.spc = self.spc.transpose()
 
     def invtrim(self, start=None, end=None, *args):
+        """
+        Takes a start and an end parameter for the energy axis and keeps the spectral columns that are exclusive of the
+        range.
+
+        Example: spc columns are [1, 2, 3, 4, 5]. invtrim(start=2, end=4) will keep only columns [1, 5].
+
+        :param start: float
+            Axis value to start keeping
+        :param end: float
+            Axis value to end keeping
+        :param args:
+            None
+        :return: None
+        """
         if start is None:
             start = self.spc.index[0]
         if end is None:
@@ -344,30 +448,85 @@ class SpectralData():
         self.spc = self.spc.transpose()
 
     def area(self, *args):
+        """
+        Integrates the area under the spectrum using np.trapz and then divides the spectral intensities by the area.
+
+        :param args:
+            None
+        :return: None
+        """
         import numpy as np
         self.spc = self.spc.divide(self.spc.apply(lambda x: np.trapz(x, self.wav), axis=1), axis=0)
 
     def lastpoint(self, *args):
+        """
+        Subtracts each spectrum by the last point in spectrum, the intensity in the last column of spc.
+
+        :param args:
+            None
+        :return:
+            None
+        """
         self.spc = self.spc.sub(self.spc.iloc[:, -1], axis=0)
 
     def mean_center(self, option=False, *args):
+        """
+        Subtracts the spectra by the mean. If option==False, subtracts each spectrum by the mean of the spectrum. If
+        option==True, subtracts the column by the mean of the column (energy axis).
+
+        :param option: bool
+            If False, subtracts each spectrum by the mean of the spectrum
+            If True, subtracts each column by the mean of the column
+        :param args:
+        :return:
+        """
         if not option:
             self.spc = self.spc.sub(self.spc.mean(axis=1), axis=0)
         elif option:
             self.spc = self.spc.sub(self.spc.mean(axis=0), axis=1)
 
     def peaknorm(self, wavenumber, *args):
+        """
+        Normalizes the spectrum such that the specified wavenumber is intensity is 1. If that exact wavenumber is not
+        found, the closest value is selected.
 
+        :param wavenumber: float
+            Desired axis value to divide the spectrum.
+        :param args:
+            None
+        :return:
+            None
+        """
         self.spc = self.spc.transpose()
         index = self.spc.index.get_loc(wavenumber, method='nearest')
         self.spc = self.spc.divide(self.spc.iloc[index, :])
         self.spc = self.spc.transpose()
 
     def vector(self, *args):
+        """
+        Performs vector normalization of the spectrum.
+
+        :param args:
+            None
+        :return:
+            None
+        """
         self.spc = self.spc.divide(((self.spc ** 2).sum(axis=1)) ** (1 / 2), axis=0)
 
     def minmax(self, min_val=0, max_val=1, *args):
+        """
+        Performs a min-max normalization of the spectrum. Unless specified, the maximum value is 1 while the minimum
+        value is 0.
 
+        :param min_val: float
+            Minimum value of the resulting spectrum
+        :param max_val: float
+            Maximum value of the resulting spectrum
+        :param args:
+            None
+        :return:
+            None
+        """
         if min_val is None:
             min_val = 0
         if max_val is None:
@@ -379,7 +538,24 @@ class SpectralData():
         self.spc = self.spc.transpose()
 
     def _get_AsLS_baseline(self, y, lam, p, niter):
-        # adapted from https://stackoverflow.com/a/50160920
+        """
+        This function returns the Asymmetric Least Squares baseline of a spectrum. For internal use.
+
+        :param y: array-like
+            spectrum
+        :param lam: float
+            Smoothness parameter, recommended to use values between 1e2 to 1e9
+        :param p: float
+            Asymmetry parameter, recommended to use values between 0.001 to 0.1
+        :param niter: int
+            maximum number of iterations
+        :return:
+            Fitted AsLS baseline for spectrum
+
+        References:
+            Eilers and Boelens, 2005. Baseline Correction with Assymetric Least Squares Smoothing.
+            This Python adaptation was taken from https://stackoverflow.com/a/50160920
+        """
         import numpy as np
         from scipy import sparse
         from scipy.sparse.linalg import spsolve
@@ -395,6 +571,18 @@ class SpectralData():
         return z
 
     def AsLS(self, lam, p, niter=20, *args):
+        """
+        This function fits the Asymmetric Least Squares baseline of a spectrum and subtracts it.
+
+        :param lam: float
+            Smoothness parameter, recommended to use values between 1e2 to 1e9
+        :param p: float
+            Asymmetry parameter, recommended to use values between 0.001 to 0.1
+        :param niter: int
+            maximum number of iterations
+        :return:
+            None
+        """
         if niter is None:
             niter = 20
         elif not isinstance(niter, int):
@@ -406,6 +594,23 @@ class SpectralData():
 
 
     def polyfit(self, order, niter=20, *args):
+        """
+        Fits a modified polyfit baseline for each spectrum and subtracts the baseline.
+
+        :param order:
+            Order of polynomial baseline
+        :param niter:
+            Number of iterations, default is 20. Increase if there are flat sections in the resulting spectrum
+        :param args:
+            None
+        :return:
+            None
+
+        Reference:
+        Lieber, C. A., and A. Mahadevan-Jansen, “Automated Method for Subtraction of Fluorescence from Biological Raman
+        Spectra,” Applied Spectroscopy, 57, pp. 1363–1367 (2003).
+        doi.org/10.1366/000370203322554518
+        """
         import numpy as np
         import pandas as pd
 
@@ -445,6 +650,16 @@ class SpectralData():
             self.spc.iloc[ii, :] = spectrum - baseline_current
 
     def subtract(self, spectra, *args):
+        """
+        Subtracts each spectrum by a specified spectrum
+
+        :param spectra: int
+            Spectrum to use for the subtraction, numbering starting at 1
+        :param args:
+            None
+        :return:
+            None
+        """
         if spectra is None:
             print("Need to provide a integer for the spectra to subtract by.")
             return
@@ -455,3 +670,4 @@ class SpectralData():
             spectra = int(spectra)
 
         self.spc = self.spc.sub(self.spc.iloc[spectra-1, :], axis=1)
+
