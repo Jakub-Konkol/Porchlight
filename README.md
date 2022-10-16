@@ -12,4 +12,7 @@ The software is also designed for the classroom as well, with important features
 
 Acknowledgements
 ----------------
-This software has been developed by [Jakub Konkol](https://jakubkonkol.com/) of the Dr. Tsilomelekis group at Rutgers, the State University of New Jersey. [Come see our research!](https://www.gtsilomelekis.com/)
+
+This material is based upon work supported in part by Rutgers, The State University of New Jersey, and the National Science Foundation Award 1751683.
+
+This software has been developed by [Jakub Konkol](https://jakubkonkol.com/) of the [Dr. Tsilomelekis](https://www.gtsilomelekis.com/) group at Rutgers, the State University of New Jersey. [Come see our research!](https://www.gtsilomelekis.com/)

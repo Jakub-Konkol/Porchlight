@@ -36,7 +36,7 @@ class PreprocessSelector(tk.Frame):
         self.categories = {'Trim': ['Trim', 'Inverse Trim'],
                            'Baseline Correction': ['AsLS', 'Polyfit'],
                            'Smoothing': ['Rolling', 'Savitzky-Golay'],
-                           'Normalization': ['SNV', 'MSC', 'Area', 'Peak Normalization', 'Vector', 'Min-max'],
+                           'Normalization': ['SNV', 'Detrend', 'MSC', 'Area', 'Peak Normalization', 'Vector', 'Min-max'],
                            'Center': ['Mean', 'Last Point'],
                            'Derivative': ['SG Derivative'],
                            'Dataset': ['Subtract', 'Reset'],
@@ -59,6 +59,7 @@ class PreprocessSelector(tk.Frame):
                        'SG Derivative': ['Window', 'Polynomial', 'Deriv. Order'],
                        'Reset': [],
                        'Subtract': ['Spectrum'],
+                       'Detrend': ['Order'],
                        '': []}
 
         # make the category combobox
@@ -176,7 +177,8 @@ class OOP:
                               'Polyfit': self.userData.polyfit,
                               'AsLS': self.userData.AsLS,
                               'Reset': self.userData.reset,
-                              'Subtract': self.userData.subtract}
+                              'Subtract': self.userData.subtract,
+                              'Detrend' : self.userData.detrend}
             self.perform_preprocessing()
             self.plot_data()
 

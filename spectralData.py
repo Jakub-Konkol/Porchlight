@@ -11,6 +11,13 @@ class SpectralData():
     Class that handles the loading, storage and manipulation of spectral data.
     """
     def __init__(self, file=None):
+        """
+        Initialization of the class. Expects a list of files to load in, data handling is automatic.
+
+        :param file: str, list-like
+            Directories of files to be loaded
+            If None, initializes an empty class you can populate yourself.
+        """
         import numpy as np
         import pandas as pd
 
@@ -39,13 +46,12 @@ class SpectralData():
                 for ii in range(1, len(file)):
                     spc = self.getDataFromFile(file[ii])
                     store_spc.append(spc)
-                    # TODO: what if wav is not the same? some kind of pandas merge
 
             combined = pd.concat(store_spc, axis=0, ignore_index=True)
             combined.sort_index(axis=1, inplace=True)
 
             # This section tries to rectify abscissa mismatches due to rounding errors. If two adjacent columns have
-            # opposite missing values, then it will combine the columns into one with the mean absissa
+            # opposite missing values, then it will combine those columns into one with the mean abscissa value
             for ii in range(1, len(combined.columns) - 1):
                 before = combined.columns[ii] - combined.columns[ii - 1]
                 after = combined.columns[ii + 1] - combined.columns[ii]
@@ -106,6 +112,7 @@ class SpectralData():
         else:
             print("This filetype is not supported")
 
+        # this is to be able to later realign the spectra to the source file
         self.file_source = self.file_source + [os.path.split(file)[1] for x in range(spc.shape[0])]
 
         return spc
@@ -128,7 +135,6 @@ class SpectralData():
         import csv
 
         # use csv.Sniffer to determine whether there is a header
-
         with open(file, 'r') as f:
             first_three_lines = ''
             for ii in range(3):
@@ -146,12 +152,10 @@ class SpectralData():
 
         # assuming that there are more data points than spectra, make row-wise if more rows than columns
         if raw.shape[0] > raw.shape[1]:
-            # raw.iloc[:,0] = round(raw.iloc[:,0],2)
             raw = raw.set_index(raw.columns[0]).transpose()
         else:
             raw = raw.transpose().set_index(raw.columns[0]).transpose()
 
-        # return squeezed spc in case only 1D
         return raw
 
     def readCSVFile(self, file):
@@ -265,7 +269,7 @@ class SpectralData():
 
     def reset(self, *args):
         """
-        Reset the spectra and wavenumber to raw imported values.
+        Reset the spectra and wavenumber to raw imported values, undoing any preprocessing.
         """
         # import pandas as pd
         # import numpy as np
@@ -363,6 +367,10 @@ class SpectralData():
         -------
         None.
 
+        Reference:
+            Barnes, R. J., M. S. Dhanoa, and S. J. Lister, “Standard Normal Variate Transformation and De-trending of
+            Near-Infrared Diffuse Reflectance Spectra,” Appl. Spectrosc., 43, pp. 772–777 (1989).
+
         """
         import numpy as np
         self.spc = self.spc.apply(lambda x: (x - np.mean(x)) / np.std(x), axis=1)
@@ -396,6 +404,30 @@ class SpectralData():
         for ii in range(self.spc.shape[0]):
             fit = np.polyfit(ref, self.spc.iloc[ii, :], 1, full=True)
             self.spc.iloc[ii, :] = (self.spc.iloc[ii, :] - fit[0][1]) / fit[0][0]
+
+    def detrend(self, order=2, *args):
+        """
+        Performs detrending of spectrum. This does NOT perform SNV automatically as suggested by Barnes et. al., to get
+        the paper version of detrending perform SNV then detrending.
+
+        :param order: int
+            Integer of polynomial to fit for detrend. Default is 2 as recommended in paper for NIR data.
+        :return:
+            None
+
+        Reference:
+            Barnes, R. J., M. S. Dhanoa, and S. J. Lister, “Standard Normal Variate Transformation and De-trending of
+            Near-Infrared Diffuse Reflectance Spectra,” Appl. Spectrosc., 43, pp. 772–777 (1989).
+        """
+
+        import numpy as np
+
+        if order is None:
+            order = 2
+
+        for ii in range(self.spc.shape[0]):
+            fit = np.polyfit(self.wav, self.spc.iloc[ii, :], order)
+            self.spc.iloc[ii, :] = self.spc.iloc[ii, :].values - np.polyval(fit, self.wav)
 
     def trim(self, start=None, end=None, *args):
         """
@@ -553,7 +585,7 @@ class SpectralData():
             Fitted AsLS baseline for spectrum
 
         References:
-            Eilers and Boelens, 2005. Baseline Correction with Assymetric Least Squares Smoothing.
+            Eilers and Boelens, 2005. Baseline Correction with Asymmetric Least Squares Smoothing.
             This Python adaptation was taken from https://stackoverflow.com/a/50160920
         """
         import numpy as np
@@ -582,6 +614,10 @@ class SpectralData():
             maximum number of iterations
         :return:
             None
+
+        References:
+            Eilers and Boelens, 2005. Baseline Correction with Asymmetric Least Squares Smoothing.
+            This Python adaptation was taken from https://stackoverflow.com/a/50160920
         """
         if niter is None:
             niter = 20
@@ -607,9 +643,9 @@ class SpectralData():
             None
 
         Reference:
-        Lieber, C. A., and A. Mahadevan-Jansen, “Automated Method for Subtraction of Fluorescence from Biological Raman
-        Spectra,” Applied Spectroscopy, 57, pp. 1363–1367 (2003).
-        doi.org/10.1366/000370203322554518
+            Lieber, C. A., and A. Mahadevan-Jansen, “Automated Method for Subtraction of Fluorescence from Biological
+            Raman Spectra,” Applied Spectroscopy, 57, pp. 1363–1367 (2003).
+            doi.org/10.1366/000370203322554518
         """
         import numpy as np
         import pandas as pd
@@ -624,8 +660,6 @@ class SpectralData():
                 if ai != bi:
                     return False
             return True
-
-        # self.baseline = pd.DataFrame(np.zeros(self.spc.shape), columns=self.wav)
 
         for ii in range(self.spc.shape[0]):
             spectrum = self.spc.iloc[ii, :]
@@ -646,7 +680,6 @@ class SpectralData():
                 baseline_current = np.polyval(spc_fit, spectrum.index)
                 baseline_current = np.where(baseline_current < baseline_previous, baseline_current, baseline_previous)
 
-            # self.baseline.iloc[ii, :] = baseline_current
             self.spc.iloc[ii, :] = spectrum - baseline_current
 
     def subtract(self, spectra, *args):
@@ -671,3 +704,89 @@ class SpectralData():
 
         self.spc = self.spc.sub(self.spc.iloc[spectra-1, :], axis=1)
 
+    def to_absorbance(self):
+        """
+        Converts the spectrum to an absorbance spectrum, assuming a transmittance or reflectance spectrum.
+
+        :return:
+            None
+
+        Reference:
+            Geladi, P., D. MacDougall, and H. Martens, “Linearization and Scatter-Correction for Near-Infrared
+            Reflectance Spectra of Meat,” Applied Spectroscopy, 39, pp. 491–500 (1985).
+        """
+
+        self.spc = self.spc.apply(self._trans_to_absorbance, axis=1)
+
+    def _trans_to_abs(self, y):
+        """
+        Internal function to transform from transmittance/reflectance to absorbance
+
+        :param y: array-like
+            Transmittance or reflectance spectrum
+
+        :return: array-like
+            Absorption spectrum
+
+        Reference:
+            Geladi, P., D. MacDougall, and H. Martens, “Linearization and Scatter-Correction for Near-Infrared
+            Reflectance Spectra of Meat,” Applied Spectroscopy, 39, pp. 491–500 (1985).
+        """
+        import numpy as np
+
+        return -np.log10(y)
+
+    def _abs_to_trans(self, y):
+        """
+        Internal function to transform from absorbance to transmittance/reflectance
+
+        :param y: array-like
+            Absorption spectrum
+
+        :return: array-like
+            Reflectance/transmittance spectrum
+
+        Reference:
+            Geladi, P., D. MacDougall, and H. Martens, “Linearization and Scatter-Correction for Near-Infrared
+            Reflectance Spectra of Meat,” Applied Spectroscopy, 39, pp. 491–500 (1985).
+        """
+
+        import numpy as np
+
+        return np.power(10, 1-y)
+
+    def _ref_to_KM(self, y):
+        """
+        Internal function to transform from reflectance to Kebulka-Munk
+
+        :param y: array-like
+            Reflectance spectrum
+
+        :return:
+            Kebulka-Munk transformed spectrum
+
+        Reference:
+            Geladi, P., D. MacDougall, and H. Martens, “Linearization and Scatter-Correction for Near-Infrared
+            Reflectance Spectra of Meat,” Applied Spectroscopy, 39, pp. 491–500 (1985).
+        """
+
+        return (1 - y) ** 2 / 2 / y
+
+    def _ref_to_invKM(self, y):
+        """
+        Internal function to transform from reflectance to inverse Kebulka-Munk
+
+        :param y:array-like
+            Reflectance spectrum
+
+        :return:array-like
+            inverse Kebulka-Munk spectrum
+
+        Reference:
+            Geladi, P., D. MacDougall, and H. Martens, “Linearization and Scatter-Correction for Near-Infrared
+            Reflectance Spectra of Meat,” Applied Spectroscopy, 39, pp. 491–500 (1985).
+
+        """
+        import numpy as np
+
+        return np.power(self._ref_to_KM(y), -1)
