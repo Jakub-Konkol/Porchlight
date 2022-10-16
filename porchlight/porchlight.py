@@ -178,7 +178,7 @@ class OOP:
                               'AsLS': self.userData.AsLS,
                               'Reset': self.userData.reset,
                               'Subtract': self.userData.subtract,
-                              'Detrend' : self.userData.detrend}
+                              'Detrend': self.userData.detrend}
             self.perform_preprocessing()
             self.plot_data()
 
@@ -299,6 +299,8 @@ class OOP:
         #####################################################################################
 
     def create_widgets(self):
+        import os
+
         # set up the left/right frames
         self.left = ttk.Frame(self.win)
         self.left.bind("<ButtonRelease>", lambda x: self.reset_focus)
@@ -386,19 +388,23 @@ class OOP:
 
         # Display a Message Box
         def _msgBox():
-            msg.showinfo('Porchlight Help', 'Porchlight was created by Jakub Konkol and George Tsilomelekis.\nCheck us out at gtsilomelekis.com!')
+            msg.showinfo('About Porchlight', 'Porchlight was created by Jakub Konkol and George Tsilomelekis.\nCheck us out at gtsilomelekis.com!')
 
         # Add another Menu to the Menu Bar and an item
         help_menu = Menu(menu_bar, tearoff=0)
         help_menu.add_command(label="About", command=_msgBox)  # display messagebox when clicked
         menu_bar.add_cascade(label="Help", menu=help_menu)
 
-        # Change the main windows icon
-        self.win.iconbitmap('porchlight.ico')
+        # Change the main windows icon, using ico if windows, otherwise png
+        if os.name == 'nt':
+            self.win.iconbitmap('./resources/porchlight.ico')
+        else:
+            self.win.iconbitmap('./resources/porchlight.png')
 
 
-# ======================
-# Start GUI
-# ======================
-oop = OOP()
-oop.win.mainloop()
+if __name__ == "__main__":
+    # ======================
+    # Start GUI
+    # ======================
+    oop = OOP()
+    oop.win.mainloop()

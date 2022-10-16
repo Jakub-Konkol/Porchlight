@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Porchlight"
+version = "1.0.0"
+authors = [
+    {name="Jakub Konkol", email="jakub.konkol@rutgers.edu"},
+    {name="George Tsilomelekis", email="g.tsilo@rutgers.edu"}
+]
+description = "A GUI application for preprocessing of spectra. This material is based upon work supported in part by Rutgers, The State University of New Jersey, and the National Science Foundation Award 1751683."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research"
+    ]
+dependencies = [
+    "tk >= 8.6.11",
+    "pandas >= 1.4.2",
+    "spc_spectra >= 0.4.0",
+    "scipy >= 1.7.3",
+    "numpy >= 1.22.3",
+    "matplotlib >= 3.5.1"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/Jakub-Konkol/Porchlight"
+"Tsilomelekis Research group" = "https://www.gtsilomelekis.com/"
+"Jakub's Blog" = "https://jakubkonkol.com/"
