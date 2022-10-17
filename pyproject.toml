@@ -20,15 +20,49 @@ classifiers = [
     "Intended Audience :: Science/Research"
     ]
 dependencies = [
-    "tk >= 8.6.11",
-    "pandas >= 1.4.2",
-    "spc_spectra >= 0.4.0",
-    "scipy >= 1.7.3",
-    "numpy >= 1.22.3",
-    "matplotlib >= 3.5.1"
+    "tk",
+    "pandas",
+    "spc_spectra",
+    "scipy",
+    "numpy",
+    "matplotlib"
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/Jakub-Konkol/Porchlight"
 "Tsilomelekis Research group" = "https://www.gtsilomelekis.com/"
 "Jakub's Blog" = "https://jakubkonkol.com/"
+
+[tool.setuptools]
+packages=["porchlight"]
+include-package-data = true
+
+
+[tool.black]
+line-length = 88
+target_version = ['py36']
+include = '''
+^/(
+    | porchlight/.*\.pyi?
+    | resources/*.*
+'''
+exclude = '''
+^/(
+  (
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | \.idea
+    | data
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''

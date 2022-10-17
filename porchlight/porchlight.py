@@ -17,11 +17,9 @@ from tkinter import messagebox as msg
 from tkinter import filedialog as fd
 from time import sleep  # careful - this can freeze the GUI
 import pathlib
-
-from spectralData import SpectralData
-
-
+from .spectralData import SpectralData
 # from ToolTip import ToolTip
+
 
 class PreprocessSelector(tk.Frame):
     def __init__(self, parent, column, row, title='Step'):
@@ -132,7 +130,7 @@ class OOP:
         # Create instance
         self.win = tk.Tk()
 
-        # i like Breeze but not enough to figure out if I can include it
+        # i still like Breeze but the application becomes less responsive, artifacting as it resizes
         # self.win.tk.call("source", "Breeze.tcl")
         # ttk.Style().theme_use("Breeze")
 
@@ -395,11 +393,11 @@ class OOP:
         help_menu.add_command(label="About", command=_msgBox)  # display messagebox when clicked
         menu_bar.add_cascade(label="Help", menu=help_menu)
 
-        # Change the main windows icon, using ico if windows, otherwise png
-        if os.name == 'nt':
-            self.win.iconbitmap('./resources/porchlight.ico')
-        else:
-            self.win.iconbitmap('./resources/porchlight.png')
+        # # Change the main windows icon, using ico if windows, otherwise png
+        # if os.name == 'nt':
+        #     self.win.iconbitmap('porchlight.ico')
+        # else:
+        #     self.win.iconbitmap('porchlight.png')
 
 
 if __name__ == "__main__":
