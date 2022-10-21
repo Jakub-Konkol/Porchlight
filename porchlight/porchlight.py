@@ -3,6 +3,8 @@ Created on Sat Apr  9 15:17:03 2022
 
 @author: Jakub
 """
+import base64
+
 # ===========================
 # Imports
 # ===========================
@@ -394,10 +396,15 @@ class OOP:
         menu_bar.add_cascade(label="Help", menu=help_menu)
 
         # # Change the main windows icon, using ico if windows, otherwise png
-        # if os.name == 'nt':
-        #     self.win.iconbitmap('porchlight.ico')
-        # else:
-        #     self.win.iconbitmap('porchlight.png')
+        resource_dir = os.path.join(os.path.dirname(__file__), 'resources')
+        if os.name == 'nt':
+            self.win.iconbitmap(os.path.join(resource_dir, 'porchlight.ico'))
+        else:
+            # weird linux hack from https://stackoverflow.com/questions/45361749/python-3-6-tkinter-window-icon-on-linux-error,
+            # not sure it works.
+            with open(os.path.join(resource_dir, 'porchlight.gif')) as icon_gif:
+                icon_base64 = base64.b64encode(icon_gif.read())
+            self.win.iconbitmap(icon_base64)
 
 
 if __name__ == "__main__":
