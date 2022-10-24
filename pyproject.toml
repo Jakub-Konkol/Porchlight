@@ -22,7 +22,6 @@ classifiers = [
 dependencies = [
     "tk",
     "pandas",
-    "spc_spectra",
     "scipy",
     "numpy",
     "matplotlib"
@@ -37,6 +36,8 @@ dependencies = [
 packages=["porchlight"]
 include-package-data = true
 
+[project.optional-dependencies]
+SPC = ['spc-spectra']
 
 [tool.black]
 line-length = 88

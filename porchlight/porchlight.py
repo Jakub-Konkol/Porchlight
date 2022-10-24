@@ -398,7 +398,10 @@ class OOP:
         # # Change the main windows icon, using ico if windows, otherwise png
         resource_dir = os.path.join(os.path.dirname(__file__), 'resources')
         if os.name == 'nt':
+            import ctypes
             self.win.iconbitmap(os.path.join(resource_dir, 'porchlight.ico'))
+            myappid = 'Rutgers.Porchlight.1.0.0'  # arbitrary string
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
         else:
             # weird linux hack from https://stackoverflow.com/questions/45361749/python-3-6-tkinter-window-icon-on-linux-error,
             # not sure it works.
