@@ -373,7 +373,7 @@ class SpectralData():
 
         """
         import numpy as np
-        self.spc = self.spc.apply(lambda x: (x - np.mean(x)) / np.std(x), axis=1)
+        self.spc = self.spc.sub(self.spc.mean(axis=1), axis=0).divide(self.spc.std(axis=1), axis=0)
 
     def msc(self, reference=None, *args):
         """
