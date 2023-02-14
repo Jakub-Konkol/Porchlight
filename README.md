@@ -14,15 +14,18 @@ The software is also designed for the classroom as well, with important features
 ![GUI in use](/repo-resources/gui.PNG)
 
 ## Installation
-
+<!---
 Porchlight can be installed using
 
 `pip install porchlight`
 
 If you would like to include optional packages for specific filetypes, use the following:
 
-`pip install porchlight[SPC]`
+`pip install porchlight[SPC
 
+someone sniped the package name porchlight from me on the pipy index
+
+--->
 To install the most up-to-date version from GitHub, you can use the following:
 
 `pip install git+https://github.com/Jakub-Konkol/Porchlight.git`
