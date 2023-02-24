@@ -405,7 +405,7 @@ class OOP:
         else:
             # weird linux hack from https://stackoverflow.com/questions/45361749/python-3-6-tkinter-window-icon-on-linux-error,
             # not sure it works.
-            with open(os.path.join(resource_dir, 'porchlight.gif')) as icon_gif:
+            with open(os.path.join(resource_dir, 'porchlight.gif'), 'rb') as icon_gif:
                 icon_base64 = base64.b64encode(icon_gif.read())
             self.win.iconbitmap(icon_base64)
 
