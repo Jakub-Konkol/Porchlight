@@ -790,3 +790,20 @@ class SpectralData():
         import numpy as np
 
         return np.power(self._ref_to_KM(y), -1)
+
+    def pareto(self):
+        """
+            Performs in-place pareto scaling of data.
+
+            Returns
+            -------
+            None.
+
+            Reference:
+                van den Berg RA, Hoefsloot HC, Westerhuis JA, Smilde AK, and van der Werf MJ. "Centering, scaling, and
+                transformations: improving the biological information content of metabolomics data," BMC Genomics,
+                2006 Jun 8;7:142. doi: 10.1186/1471-2164-7-142.
+
+            """
+        import numpy as np
+        self.spc = self.spc.sub(self.spc.mean(axis=1), axis=0).divide(np.sqrt(self.spc.std(axis=1)), axis=0)
