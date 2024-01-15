@@ -79,6 +79,7 @@ class SpectralData():
             self._wav_raw = self.spc.columns[:]
             self.wav = self._wav_raw.copy(deep=True)
             self.war = np.zeros((self.spc.shape[1]))
+            self.shape = self.spc.shape
             # self.baseline = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
 
     def getDataFromFile(self, file):
