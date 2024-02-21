@@ -179,7 +179,8 @@ class OOP:
                               'AsLS': self.userData.AsLS,
                               'Reset': self.userData.reset,
                               'Subtract': self.userData.subtract,
-                              'Detrend': self.userData.detrend}
+                              'Detrend': self.userData.detrend,
+                              'Pareto': self.userData.pareto}
             self.perform_preprocessing()
             self.plot_data()
 
