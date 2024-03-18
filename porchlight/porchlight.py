@@ -34,7 +34,7 @@ class PreprocessSelector(tk.Frame):
 
         # define the categories and label relations
         self.categories = {'Trim': ['Trim', 'Inverse Trim'],
-                           'Baseline Correction': ['AsLS', 'Polyfit'],
+                           'Baseline Correction': ['AsLS', 'Polyfit', 'Pearson'],
                            'Smoothing': ['Rolling', 'Savitzky-Golay'],
                            'Normalization': ['SNV', 'Detrend', 'MSC', 'Area', 'Peak Normalization', 'Vector', 'Min-max', 'Pareto'],
                            'Center': ['Mean', 'Last Point'],
@@ -61,6 +61,7 @@ class PreprocessSelector(tk.Frame):
                        'Subtract': ['Spectrum'],
                        'Detrend': ['Order'],
                        'Pareto': [],
+                       'Pearson': ['u', 'v'],
                        '': []}
 
         # make the category combobox
@@ -180,7 +181,8 @@ class OOP:
                               'Reset': self.userData.reset,
                               'Subtract': self.userData.subtract,
                               'Detrend': self.userData.detrend,
-                              'Pareto': self.userData.pareto}
+                              'Pareto': self.userData.pareto,
+                              'Pearson': self.userData.pearson}
             self.perform_preprocessing()
             self.plot_data()
 

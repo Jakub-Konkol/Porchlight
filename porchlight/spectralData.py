@@ -28,6 +28,10 @@ class SpectralData():
             self.war = [0]
             self.spc = [0]
             self.wav = [0]
+            self._baselines = []
+            self.shape = [0]
+            self.tf_history = []
+
         else:
             # initialize temporary arrays
             store_spc = []
@@ -80,6 +84,7 @@ class SpectralData():
             self.wav = self._wav_raw.copy(deep=True)
             self.war = np.zeros((self.spc.shape[1]))
             self.shape = self.spc.shape
+            self._baselines = np.zeros(self.spc.shape)
             # self.baseline = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
 
     def getDataFromFile(self, file):
@@ -272,11 +277,12 @@ class SpectralData():
         """
         Reset the spectra and wavenumber to raw imported values, undoing any preprocessing.
         """
-        # import pandas as pd
-        # import numpy as np
+        import pandas as pd
+        import numpy as np
         self.spc = self._spc_raw.copy(deep=True)
         self.wav = self._wav_raw.copy(deep=True)
-        #self.baseline = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
+        self._baselines = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
+        self.tf_history = []
 
     def rolling(self, window, *args):
         """
@@ -294,6 +300,8 @@ class SpectralData():
             window = 1
         if not isinstance(window, int):
             window = int(window)
+
+        self.tf_history.append(['rolling', {'window': window}])
 
         self.spc = self.spc.transpose()
         # first perform the rolling window smooth
@@ -329,6 +337,8 @@ class SpectralData():
         if not isinstance(poly, int):
             poly = int(poly)
 
+        self.tf_history.append(['SGSmooth', {'window': window, 'poly': poly}])
+
         self.spc = pd.DataFrame(savgol_filter(self.spc, window, poly, axis=1), columns=self.spc.columns,
                                 index=self.spc.index)
 
@@ -349,6 +359,8 @@ class SpectralData():
         """
         from scipy.signal import savgol_filter
         import pandas as pd
+
+        self.tf_history.append(['SGDeriv', {'window': window, 'poly': poly, 'order': order}])
 
         if not isinstance(window, int):
             window = int(window)
@@ -373,7 +385,7 @@ class SpectralData():
             Near-Infrared Diffuse Reflectance Spectra,” Appl. Spectrosc., 43, pp. 772–777 (1989).
 
         """
-        import numpy as np
+        self.tf_history.append(['snv', {}])
         self.spc = self.spc.sub(self.spc.mean(axis=1), axis=0).divide(self.spc.std(axis=1), axis=0)
 
     def msc(self, reference=None, *args):
@@ -392,6 +404,8 @@ class SpectralData():
 
         """
         import numpy as np
+
+        self.tf_history.append(['msc', {'reference': reference}])
 
         if reference is None:
             ref = self.spc.mean(axis=0)
@@ -423,6 +437,8 @@ class SpectralData():
 
         import numpy as np
 
+        self.tf_history.append(['detrend', {'order': order}])
+
         if order is None:
             order = 2
 
@@ -445,6 +461,9 @@ class SpectralData():
             None
         :return: None
         """
+
+        self.tf_history.append(['trim', {"start": start, "end": end}])
+
         if start is None:
             start = self.spc.columns[0]
         if end is None:
@@ -470,6 +489,9 @@ class SpectralData():
             None
         :return: None
         """
+
+        self.tf_history.append(['invtrim', {"start": start, "end": end}])
+
         if start is None:
             start = self.spc.index[0]
         if end is None:
@@ -489,6 +511,7 @@ class SpectralData():
         :return: None
         """
         import numpy as np
+        self.tf_history.append(['area', {}])
         self.spc = self.spc.divide(self.spc.apply(lambda x: np.trapz(x, self.wav), axis=1), axis=0)
 
     def lastpoint(self, *args):
@@ -500,6 +523,7 @@ class SpectralData():
         :return:
             None
         """
+        self.tf_history.append(['lastpoint', {}])
         self.spc = self.spc.sub(self.spc.iloc[:, -1], axis=0)
 
     def mean_center(self, option=False, *args):
@@ -513,6 +537,7 @@ class SpectralData():
         :param args:
         :return:
         """
+        self.tf_history.append(['mean_center', {"option": option}])
         if not option:
             self.spc = self.spc.sub(self.spc.mean(axis=1), axis=0)
         elif option:
@@ -530,6 +555,7 @@ class SpectralData():
         :return:
             None
         """
+        self.tf_history.append(['peaknorm', {"wavenumber": wavenumber}])
         self.spc = self.spc.transpose()
         index = self.spc.index.get_loc(wavenumber, method='nearest')
         self.spc = self.spc.divide(self.spc.iloc[index, :])
@@ -544,6 +570,7 @@ class SpectralData():
         :return:
             None
         """
+        self.tf_history.append(['vector', {}])
         self.spc = self.spc.divide(((self.spc ** 2).sum(axis=1)) ** (1 / 2), axis=0)
 
     def minmax(self, min_val=0, max_val=1, *args):
@@ -560,6 +587,7 @@ class SpectralData():
         :return:
             None
         """
+        self.tf_history.append(['minmax', {"min_val": min_val, "max_val": max_val}])
         if min_val is None:
             min_val = 0
         if max_val is None:
@@ -620,6 +648,7 @@ class SpectralData():
             Eilers and Boelens, 2005. Baseline Correction with Asymmetric Least Squares Smoothing.
             This Python adaptation was taken from https://stackoverflow.com/a/50160920
         """
+        self.tf_history.append(['AsLS', {"lam": lam, "p": p, "niter": niter}])
         if niter is None:
             niter = 20
         elif not isinstance(niter, int):
@@ -649,7 +678,8 @@ class SpectralData():
             doi.org/10.1366/000370203322554518
         """
         import numpy as np
-        import pandas as pd
+
+        self.tf_history.append(['polyfit', {"order": order, "niter": niter}])
 
         if niter is None:
             niter = 20
@@ -694,6 +724,8 @@ class SpectralData():
         :return:
             None
         """
+        self.tf_history.append(['subtract', {"spectra": spectra}])
+
         if spectra is None:
             print("Need to provide a integer for the spectra to subtract by.")
             return
@@ -804,7 +836,78 @@ class SpectralData():
                 van den Berg RA, Hoefsloot HC, Westerhuis JA, Smilde AK, and van der Werf MJ. "Centering, scaling, and
                 transformations: improving the biological information content of metabolomics data," BMC Genomics,
                 2006 Jun 8;7:142. doi: 10.1186/1471-2164-7-142.
-
-            """
+        """
         import numpy as np
+        self.tf_history.append(['pareto', {}])
         self.spc = self.spc.sub(self.spc.mean(axis=1), axis=0).divide(np.sqrt(self.spc.std(axis=1)), axis=0)
+
+    def pearson(self, u=4, v=3):
+        """
+        Performs in-place Pearson's baseline correction of the data, with the baseline being approximated using a 4th
+        order Legendre polynomial.
+
+        Returns
+        -------
+        None.
+
+        Reference:
+            Pearson, G.A. "A general baseline-recognition and baseline-flattening algorithm." Journal of Magnetic
+            Resonance, Aug 1997; Volume 27, Issue 2, pages 265-272. doi: 10.1016/0022-2364(77)90076-2
+        """
+
+        import numpy as np
+        import math
+
+        self.tf_history.append(['pearson', {"u": u, "v": v}])
+
+        def heavyside(z):
+            if z >= 0:
+                return 1
+            else:
+                return 0
+
+        def is_correction_negligible(stddev, x):
+            if all(np.abs(x) < (0.125 * stddev)):
+                return True
+            else:
+                return False
+
+        for ii in range(self.spc.shape[0]):
+            print(f"Working on spectra {ii+1} of {len(self.spc.shape[0])}")
+
+            Y = self.spc.iloc[ii, :].values
+
+            sigma_0 = np.inf
+            sigma_1 = 0
+            g = np.ones(len(self.wav)) * np.inf
+
+            while not is_correction_negligible(sigma_0, g):
+                print("Correction not negligible")
+                while sigma_0 != sigma_1:
+                    print("sigma_1 != sigma0")
+                    print(f"sigma_0 = {sigma_0}")
+                    sigma_1 = np.std(Y * heavyside(*sigma_0 - np.abs(Y)))
+                    print(f"sigma_1 = {sigma_1}")
+                    sigma_0 = sigma_1
+                print("sigma_1 == sigma_0")
+
+                print("Fitting 4th order Legendre polynomial")
+                fitted = np.polynomial.legendre.Legendre.fit(self.wav.values, Y, deg=3)
+
+                print("Calculating g(x)")
+                g = np.polynomial.legendre.legval(self.wav.values, fitted)
+
+            self._baselines.iloc[ii, :] = g
+            self.spc.iloc[ii, :] = Y - g
+
+    def export_csv(self, f_path):
+        self.spc.transpose().to_csv(f_path)
+
+    def export_excel(self, f_path):
+        import pandas as pd
+
+        with pd.ExcelWriter(f_path) as writer:
+            self.spc.transpose().to_excel(writer, sheet_name="Processed Spectra")
+            self._spc_raw.transpose().to_excel(writer, sheet_name="Raw Spectra")
+            self._baselines.transpose().to_excel(writer, sheet_name="Baselines")
+            self.tf_history.to_excel(writer, sheet_name="Procesing Recipe")
