@@ -824,7 +824,7 @@ class SpectralData():
 
         return np.power(self._ref_to_KM(y), -1)
 
-    def pareto(self):
+    def pareto(self, *args):
         """
             Performs in-place pareto scaling of data.
 
@@ -841,7 +841,7 @@ class SpectralData():
         self.tf_history.append(['pareto', {}])
         self.spc = self.spc.sub(self.spc.mean(axis=1), axis=0).divide(np.sqrt(self.spc.std(axis=1)), axis=0)
 
-    def pearson(self, u=4, v=3):
+    def pearson(self, u=4, v=3, *args):
         """
         Performs in-place Pearson's baseline correction of the data, with the baseline being approximated using a 4th
         order Legendre polynomial.
