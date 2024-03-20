@@ -286,9 +286,9 @@ class OOP:
         if f_path is None:
             return
         elif pathlib.Path(f_path).suffix == ".csv":
-            self.userData.spc.transpose().to_csv(f_path)
+            self.userData.export_csv(f_path)
         elif pathlib.Path(f_path).suffix == ".xlsx":
-            self.userData.spc.transpose().to_excel(f_path)
+            self.userData.export_excel(f_path)
 
     def reset_focus(self):
         # why doesn't this work

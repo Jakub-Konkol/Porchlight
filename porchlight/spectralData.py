@@ -82,7 +82,7 @@ class SpectralData():
                 print("True")
             self._wav_raw = self.spc.columns[:]
             self.wav = self._wav_raw.copy(deep=True)
-            self.war = np.zeros((self.spc.shape[1]))
+            self.war = pd.DataFrame(np.zeros((self.spc.shape[1])))
             self.shape = self.spc.shape
             self._baselines = np.zeros(self.spc.shape)
             # self.baseline = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
@@ -858,13 +858,22 @@ class SpectralData():
         import numpy as np
         import math
 
+        if u is None:
+            u = 4
+        if v is None:
+            v = 3
+
         self.tf_history.append(['pearson', {"u": u, "v": v}])
 
-        def heavyside(z):
-            if z >= 0:
-                return 1
-            else:
-                return 0
+        def heaviside(z):
+            result = []
+            for i in z:
+                if i >= 0:
+                    result.append(1)
+                else:
+                    result.append(0)
+
+            return np.asarray(result)
 
         def is_correction_negligible(stddev, x):
             if all(np.abs(x) < (0.125 * stddev)):
@@ -873,7 +882,7 @@ class SpectralData():
                 return False
 
         for ii in range(self.spc.shape[0]):
-            print(f"Working on spectra {ii+1} of {len(self.spc.shape[0])}")
+            print(f"Working on spectra {ii+1} of {self.spc.shape[0]}")
 
             Y = self.spc.iloc[ii, :].values
 
@@ -886,19 +895,23 @@ class SpectralData():
                 while sigma_0 != sigma_1:
                     print("sigma_1 != sigma0")
                     print(f"sigma_0 = {sigma_0}")
-                    sigma_1 = np.std(Y * heavyside(*sigma_0 - np.abs(Y)))
+                    sigma_1 = np.std(Y * heaviside(u*sigma_0 - np.abs(Y)))
                     print(f"sigma_1 = {sigma_1}")
                     sigma_0 = sigma_1
                 print("sigma_1 == sigma_0")
 
                 print("Fitting 4th order Legendre polynomial")
-                fitted = np.polynomial.legendre.Legendre.fit(self.wav.values, Y, deg=3)
+                fitted = np.polynomial.legendre.legfit(self.wav.values, Y, deg=3)
 
                 print("Calculating g(x)")
                 g = np.polynomial.legendre.legval(self.wav.values, fitted)
 
+                print("Subtracting g(x) from the spectrum")
+                Y = Y - g
+                self._baselines.iloc[ii, :] += g
+
             self._baselines.iloc[ii, :] = g
-            self.spc.iloc[ii, :] = Y - g
+            self.spc.iloc[ii, :] = Y
 
     def export_csv(self, f_path):
         self.spc.transpose().to_csv(f_path)
@@ -910,4 +923,6 @@ class SpectralData():
             self.spc.transpose().to_excel(writer, sheet_name="Processed Spectra")
             self._spc_raw.transpose().to_excel(writer, sheet_name="Raw Spectra")
             self._baselines.transpose().to_excel(writer, sheet_name="Baselines")
-            self.tf_history.to_excel(writer, sheet_name="Procesing Recipe")
+            self.war.to_excel(writer, sheet_name='Perturbation')
+            tfs = pd.DataFrame(self.tf_history)
+            tfs.to_excel(writer, sheet_name="Processing Recipe")
