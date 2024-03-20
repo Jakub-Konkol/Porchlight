@@ -913,7 +913,6 @@ class SpectralData():
                 Y = Y - g
                 self._baselines.iloc[ii, :] += g
 
-            self._baselines.iloc[ii, :] = g
             self.spc.iloc[ii, :] = Y
 
     def export_csv(self, f_path):
