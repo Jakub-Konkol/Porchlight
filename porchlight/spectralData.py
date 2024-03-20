@@ -656,7 +656,9 @@ class SpectralData():
 
         for ii in range(self.spc.shape[0]):
             spectrum = self.spc.iloc[ii, :]
-            self.spc.iloc[ii, :] = spectrum - self._get_AsLS_baseline(spectrum, lam, p, niter)
+            baseline = self._get_AsLS_baseline(spectrum, lam, p, niter)
+            self.spc.iloc[ii, :] = spectrum - baseline
+            self._baselines.iloc[ii, :] = baseline
 
 
     def polyfit(self, order, niter=20, *args):
@@ -712,6 +714,7 @@ class SpectralData():
                 baseline_current = np.where(baseline_current < baseline_previous, baseline_current, baseline_previous)
 
             self.spc.iloc[ii, :] = spectrum - baseline_current
+            self._baselines.iloc[ii, :] = baseline_current
 
     def subtract(self, spectra, *args):
         """
@@ -920,9 +923,15 @@ class SpectralData():
         import pandas as pd
 
         with pd.ExcelWriter(f_path) as writer:
+            print("Writing spectra")
             self.spc.transpose().to_excel(writer, sheet_name="Processed Spectra")
+            print("Writing raw spectra")
             self._spc_raw.transpose().to_excel(writer, sheet_name="Raw Spectra")
+            print("Writing baselines")
             self._baselines.transpose().to_excel(writer, sheet_name="Baselines")
+            print("Writing perturbations")
             self.war.to_excel(writer, sheet_name='Perturbation')
             tfs = pd.DataFrame(self.tf_history)
-            tfs.to_excel(writer, sheet_name="Processing Recipe")
+            print("Writing preprocessing recipe")
+            tfs.to_excel(writer, sheet_name="Preprocessing Recipe")
+
