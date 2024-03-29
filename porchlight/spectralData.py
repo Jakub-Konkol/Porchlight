@@ -254,6 +254,13 @@ class SpectralData():
 
         """
 
+        import pandas as pd
+        try:
+            import jcamp
+        except:
+            print("Porchlight can use the package ``jcamp'' to import spc files.\nInstall using 'pip install jcamp'")
+            return
+
         # TODO: figure out jcamp reader
         # need to do some file reading shenenigans where I look for a field called ##DATA TYPE or ##DATATYPE. Maybe re
         # where I cut out the spaces.

@@ -50,7 +50,7 @@ from porchlight.spectralData import SpectralData
 From here, one can instantiate the class by providing a list of file directories containing spectral data, either in CSV, TXT, or Thermo-Gram SPC (if optional `spc-spectra` is installed).
 
 ```python
-data = SpectralData(['myFile.csv']
+data = SpectralData(['myFile.csv'])
 ```
 
 All preprocessing techniques are methods of this class, which are performed in-place. To perform SNV, one can use
@@ -68,13 +68,16 @@ We recommend performing a reset at the start, to make sure you don't accidentall
 
 `war` - pandas DataFrame containing labels for each spectrum (not currently used)
 
-`tf_history` - a list of tuples that describe the preprocessing steps performed to the spectra
+`tf_history` - a list that describes the preprocessing steps performed to the spectra. Each list element is a list where
+the first element is the preprocessing step and the second element is a dictionary with the values given for the method.
 
 `file_source` - a list of directories that describe the source file for each spectrum. If one file provides multiple
 spectra, then it is repeated multiple times.
 
 `spc` - a pandas DataFrame containing the spectral data in a tidy format. Each row is one spectrum, each column 
 is a corresponding abscissa value. The column names are equivalent to the variable `wav`.
+
+`_baselines` - a pandas DataFrame with calculated baselines, if one was calculated.
 
 # Acknowledgements
 
@@ -85,4 +88,4 @@ This software has been developed by [Jakub Konkol](https://jakubkonkol.com/) of 
 [Dr. Tsilomelekis](https://www.gtsilomelekis.com/) group at Rutgers, the State University of New Jersey. 
 [Come see our research!](https://www.gtsilomelekis.com/)
 
-:copyright: 2021-2022 Rutgers, the State University of New Jersey
+:copyright: 2021-2024 Rutgers, the State University of New Jersey
