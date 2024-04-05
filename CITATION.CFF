@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you used Porchlight in your research or classes, please cite it as below:"
+authors:
+-  family-names: "Konkol"
+   given-names: "Jakub"
+   orcid: "https://orcid.org/0000-0002-6488-2167"
+-  family-names: "Tsilomelekis"
+   given-names: "George"
+   orcid: "https://orcid.org/0000-0002-0435-8216"
+title: "Porchlight: An Accessible and Interactive Aid in Preprocessing of Spectral Data"
+version: 1.1.0
+doi: 10.1021/acs.jchemed.2c00812
+date-released: 2023-02-14
+url: "https://github.com/Jakub-Konkol/Porchlight"
