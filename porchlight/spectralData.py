@@ -941,3 +941,42 @@ class SpectralData():
             print("Writing preprocessing recipe")
             tfs.to_excel(writer, sheet_name="Preprocessing Recipe")
 
+    def bose_einstein(self, temperature=None, *args):
+        """
+        Removes the contribution of thermal effects to Raman spectra by accounting for the Bose-Einstein thermal
+        population factor.
+        :param temperature: temperature of the spectrum in Kelvin. If none is provided, it is assumed that self.war has
+        a column named "Temperature" which will be used.
+
+        Reference:
+            G.E. Walrafen and M. R. Fisher. "[6] Low-requency Raman Scattering from Water and Aqueous Solutions: A
+            Direct Measure of Hydrogen Bonding." Methods in Enzymology. Volume 127. 1986. Pages 91-105.
+            doi:10.1016/0076-6879(86)27009-3
+        """
+        import numpy as np
+
+        h = 6.62607015e-34  # J/Hz, Planck's Constant
+        kb = 1.380649e-23   # J/K, Boltzmann Constant
+        c = 299792458       # m/s, Speed of Light
+
+        self.tf_history.append(['bose_einstein', {"temperature": temperature}])
+
+        if temperature is not None:
+            if len(temperature) > 1 & len(temperature) != self.shape[0]:
+                print("Number of temperatures don't match number of spectra")
+                return
+            if len(temperature) == 1:
+                temps = np.ones((self.shape[0], 1)) * temperature
+        else:
+            temps = self.war['Temperature'].values
+
+        correction = (np.exp(np.outer(1/temps, self.wav.values) * h * c / kb * 100) - 1)**-1
+
+        self.spc = self.spc.div(1+correction)
+
+    def ATR_Correction(self):
+        """
+        ATR correction of ATR-FTIR spectroscopic data.
+        :param theta_solution: RI of the solution
+        :param theta_crystal: RI of the ATR crsytal
+        """
