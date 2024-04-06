@@ -4,9 +4,9 @@ Created on Mon Apr  4 21:23:25 2022
 
 @author: Jakub
 """
+from collections.abc import Sequence
 
-
-class SpectralData():
+class SpectralData(Sequence):
     """
     Class that handles the loading, storage and manipulation of spectral data.
     """
@@ -84,8 +84,73 @@ class SpectralData():
             self.wav = self._wav_raw.copy(deep=True)
             self.war = pd.DataFrame(np.zeros((self.spc.shape[1])))
             self.shape = self.spc.shape
-            self._baselines = np.zeros(self.spc.shape)
+            self._baselines = pd.DataFrame(np.zeros(self.spc.shape), columns=self.spc.columns, index=self.spc.index)
             # self.baseline = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
+        super().__init__()
+
+    def __getitem__(self, item):
+        # Thank you https://stackoverflow.com/a/3912107 and https://stackoverflow.com/a/27803404
+        temp = SpectralData()
+        # user requests one specific spectrum
+        if isinstance(item, int):
+            temp.spc = self.spc.iloc[item]
+            temp.wav = self.wav
+            temp.war = self.war.iloc[item]
+            temp._baselines = self._baselines.iloc[item]
+            temp._spc_raw = self._spc_raw.iloc[item]
+            temp._wav_raw = self._wav_raw
+            temp.tf_history = self.tf_history
+        # user requests multiple spectra as a slice
+        elif isinstance(item, slice):
+            # What does this do
+            # start, stop, step = item.indices(len(self))
+            temp.spc = self.spc.iloc[item]
+            temp.wav = self.wav
+            temp.war = self.war.iloc[item]
+            temp._baselines = self._baselines.iloc[item]
+            temp._spc_raw = self._spc_raw.iloc[item]
+            temp._wav_raw = self._wav_raw
+            temp.tf_history = self.tf_history
+        # user requests multiple spectra as list
+        elif isinstance(item, list):
+            # boolean indexing
+            if len(item) == self.shape[0] & all(isinstance(x, bool) for x in item):
+                # boolean indexing
+                temp.spc = self.spc.loc[item]
+                temp.wav = self.wav
+                temp.war = self.war.loc[item]
+                temp._baselines = self._baselines.loc[item]
+                temp._spc_raw = self._spc_raw.loc[item]
+                temp._wav_raw = self._wav_raw
+                temp.tf_history = self.tf_history
+            else:
+                # positional indexing
+                temp.spc = self.spc.iloc[item]
+                temp.wav = self.wav
+                temp.war = self.war.iloc[item]
+                temp._baselines = self._baselines.iloc[item]
+                temp._spc_raw = self._spc_raw.iloc[item]
+                temp._wav_raw = self._wav_raw
+                temp.tf_history = self.tf_history
+        elif isinstance(item, tuple):
+            if len(item) > 2:
+                raise TypeError("Too many dimensions")
+            else:
+                temp.spc = self.spc.iloc[item[0], item[1]]
+                temp.wav = self.wav[item[1]]
+                temp.war = self.war.iloc[item[0], :]
+                temp._baselines = self._baselines.iloc[item[0], item[1]]
+                temp._spc_raw = self._spc_raw.iloc[item[0], item[1]]
+                temp._wav_raw = self._wav_raw[item[1]]
+                temp.tf_history = self.tf_history
+        else:
+            raise TypeError("index must be an int or a slice")
+
+        return temp
+
+
+    def __len__(self):
+        return self.shape[0]
 
     def getDataFromFile(self, file):
         """
@@ -978,5 +1043,11 @@ class SpectralData():
         """
         ATR correction of ATR-FTIR spectroscopic data.
         :param theta_solution: RI of the solution
-        :param theta_crystal: RI of the ATR crsytal
+        :param theta_crystal: RI of the ATR crystal
+        Reference:
+            J. B. Huang and M. W. Urban. "Evaluation and Analysis of Attenuated Total Reflectance FT-IR Spectra Using
+            Kramers-Konig Transforms." Applied Spectroscopy. Volume 46, Number 11, 1992. Pages 1666-1672.
+            doi: 0.1366/0003702924926970
         """
+
+        print("Doesn't do anything yet, don't use this.")
