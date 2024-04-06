@@ -98,7 +98,7 @@ class SpectralData(Sequence):
             temp.war = self.war.iloc[item]
             temp._baselines = self._baselines.iloc[item]
             temp._spc_raw = self._spc_raw.iloc[item]
-            temp._wav_raw = self._wav_raw.iloc
+            temp._wav_raw = self._wav_raw
             temp.tf_history = self.tf_history
         # user requests multiple spectra as a slice
         elif isinstance(item, slice):
@@ -137,14 +137,16 @@ class SpectralData(Sequence):
                 raise TypeError("Too many dimensions")
             else:
                 temp.spc = self.spc.iloc[item[0], item[1]]
-                temp.wav = self.wav.iloc[item[1]]
+                temp.wav = self.wav[item[1]]
                 temp.war = self.war.iloc[item[0], :]
                 temp._baselines = self._baselines.iloc[item[0], item[1]]
                 temp._spc_raw = self._spc_raw.iloc[item[0], item[1]]
-                temp._wav_raw = self._wav_raw.iloc[item[1]]
+                temp._wav_raw = self._wav_raw[item[1]]
                 temp.tf_history = self.tf_history
         else:
             raise TypeError("index must be an int or a slice")
+
+        return temp
 
 
     def __len__(self):
