@@ -548,8 +548,11 @@ class SpectralData(Sequence):
 
         self.spc = self.spc.transpose()
         self.spc = self.spc.loc[(self.spc.index > start) & (self.spc.index < end)]
+        self._baselines = self._baselines.transpose()
+        self._baselines = self._baselines.loc[(self._baselines.index > start) & (self._baselines.index < end)]
         self.wav = self.wav[(self.wav > start) & (self.wav < end)]
         self.spc = self.spc.transpose()
+        self._baselines = self._baselines.transpose()
 
     def invtrim(self, start=None, end=None, *args):
         """
@@ -576,7 +579,10 @@ class SpectralData(Sequence):
 
         self.spc = self.spc.transpose()
         self.spc = self.spc.loc[(self.spc.index < start) | (self.spc.index > end)]
+        self._baselines = self._baselines.transpose()
+        self._baselines = self._baselines.loc[(self._baselines.index < start) | (self._baselines.index > end)]
         self.wav = self.wav[(self.wav < start) | (self.wav > end)]
+        self._baselines = self._baselines.transpose()
         self.spc = self.spc.transpose()
 
     def area(self, *args):
