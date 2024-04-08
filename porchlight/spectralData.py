@@ -100,6 +100,7 @@ class SpectralData(Sequence):
             temp._spc_raw = self._spc_raw.iloc[item]
             temp._wav_raw = self._wav_raw
             temp.tf_history = self.tf_history
+            temp.shape = (1, self.shape[1])
         # user requests multiple spectra as a slice
         elif isinstance(item, slice):
             # What does this do
@@ -111,6 +112,7 @@ class SpectralData(Sequence):
             temp._spc_raw = self._spc_raw.iloc[item]
             temp._wav_raw = self._wav_raw
             temp.tf_history = self.tf_history
+            temp.shape = temp.spc.shape
         # user requests multiple spectra as list
         elif isinstance(item, list):
             # boolean indexing
@@ -123,6 +125,7 @@ class SpectralData(Sequence):
                 temp._spc_raw = self._spc_raw.loc[item]
                 temp._wav_raw = self._wav_raw
                 temp.tf_history = self.tf_history
+                temp.shape = temp.spc.shape
             else:
                 # positional indexing
                 temp.spc = self.spc.iloc[item]
@@ -132,6 +135,7 @@ class SpectralData(Sequence):
                 temp._spc_raw = self._spc_raw.iloc[item]
                 temp._wav_raw = self._wav_raw
                 temp.tf_history = self.tf_history
+                temp.shape = temp.spc.shape
         elif isinstance(item, tuple):
             if len(item) > 2:
                 raise TypeError("Too many dimensions")
@@ -143,6 +147,7 @@ class SpectralData(Sequence):
                 temp._spc_raw = self._spc_raw.iloc[item[0], item[1]]
                 temp._wav_raw = self._wav_raw[item[1]]
                 temp.tf_history = self.tf_history
+                temp.shape = temp.spc.shape
         else:
             raise TypeError("index must be an int or a slice")
 
