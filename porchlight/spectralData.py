@@ -639,10 +639,8 @@ class SpectralData(Sequence):
             None
         """
         self.tf_history.append(['peaknorm', {"wavenumber": wavenumber}])
-        self.spc = self.spc.transpose()
-        index = self.spc.index.get_loc(wavenumber, method='nearest')
-        self.spc = self.spc.divide(self.spc.iloc[index, :])
-        self.spc = self.spc.transpose()
+        index = self.spc.transpose().index.get_indexer([wavenumber], method='nearest')
+        self.spc = self.spc.divide(self.spc.iloc[:, index].values, axis='columns')
 
     def vector(self, *args):
         """
