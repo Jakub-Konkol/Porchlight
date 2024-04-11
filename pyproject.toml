@@ -24,7 +24,7 @@ dependencies = [
     "pandas",
     "scipy",
     "numpy",
-    "matplotlib"
+    "matplotlib",
     "spc_spectra"
 ]
 
