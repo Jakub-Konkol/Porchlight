@@ -1015,6 +1015,54 @@ class SpectralData(Sequence):
             print("Writing preprocessing recipe")
             tfs.to_excel(writer, sheet_name="Preprocessing Recipe")
 
+    def set_spc(self, data, orientation='infer'):
+        """
+        This is a helper function for adding data to SpectralData manually. Use this to manually set a numpy.ndarray or
+        pandas.DataFrame to the spc variable, and set the other variables as appropriate.
+        :param data: A numpy.ndarray or pandas.DataFrame containing your sepctroscopic information.
+        :param orientation: A string indicating the orientation of the spectra.
+        """
+
+        import numpy as np
+        import pandas as pd
+
+        if orientation.lower() not in {'infer', 'horizontal', 'tidy', 'vertical', 'untidy'}:
+            print('Invalid value for orientation.')
+            return
+
+        if isinstance(data, np.ndarray):
+            if orientation == 'infer':
+                if data.shape[0] > data.shape[1]:
+                    data = data.T
+            elif orientation == 'vertical' or orientation == 'untidy':
+                data = data.T
+
+            self._spc_raw = pd.DataFrame(data[1:,:], columns=data[0, :])
+            self.spc = self._spc_raw.copy(deep=True)
+            self._wav_raw = self._spc_raw.columns
+            self.wav = self._wav_raw.copy(deep=True)
+            self.shape = self.spc.shape
+            self.war = pd.DataFrame(np.zeros([self.shape[0]]))
+            self.tf_history = []
+            self._baselines = pd.DataFrame(np.zeros(self.shape), columns=self.wav)
+
+        elif isinstance(data, pd.DataFrame):
+            if orientation == 'infer':
+                if data.shape[0] > data.shape[1]:
+                    data = data.transpose()
+            elif orientation == 'vertical' or orientation == 'untidy':
+                data = data.transpose()
+
+            self._spc_raw = data
+            self.spc = self._spc_raw.copy(deep=True)
+            self._wav_raw = self._spc_raw.columns
+            self.wav = self._wav_raw.copy(deep=True)
+            self.shape = self.spc.shape
+            self.war = pd.DataFrame(np.zeros([self.shape[0]]))
+            self.tf_history = []
+            self._baselines = pd.DataFrame(np.zeros(self.shape), columns=self.wav)
+
+
     def bose_einstein(self, temperature=None, *args):
         """
         Removes the contribution of thermal effects to Raman spectra by accounting for the Bose-Einstein thermal
