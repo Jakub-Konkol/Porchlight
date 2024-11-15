@@ -984,8 +984,8 @@ class SpectralData(Sequence):
                     sigma_0 = sigma_1
                 print("sigma_1 == sigma_0")
 
-                print("Fitting 4th order Legendre polynomial")
-                fitted = np.polynomial.legendre.legfit(self.wav.values, Y, deg=3)
+                print(f"Fitting {v}th order Legendre polynomial")
+                fitted = np.polynomial.legendre.legfit(self.wav.values, Y, deg=v)
 
                 print("Calculating g(x)")
                 g = np.polynomial.legendre.legval(self.wav.values, fitted)
