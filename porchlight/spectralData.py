@@ -993,6 +993,7 @@ class SpectralData(Sequence):
                 print("Subtracting g(x) from the spectrum")
                 Y = Y - g
                 self._baselines.iloc[ii, :] += g
+            print("Correction is negligible.")
 
             self.spc.iloc[ii, :] = Y
 
@@ -1003,17 +1004,18 @@ class SpectralData(Sequence):
         import pandas as pd
 
         with pd.ExcelWriter(f_path) as writer:
-            print("Writing spectra")
+            print("Writing spectra.")
             self.spc.transpose().to_excel(writer, sheet_name="Processed Spectra")
-            print("Writing raw spectra")
+            print("Writing raw spectra.")
             self._spc_raw.transpose().to_excel(writer, sheet_name="Raw Spectra")
-            print("Writing baselines")
+            print("Writing baselines.")
             self._baselines.transpose().to_excel(writer, sheet_name="Baselines")
-            print("Writing perturbations")
+            print("Writing perturbations.")
             self.war.to_excel(writer, sheet_name='Perturbation')
             tfs = pd.DataFrame(self.tf_history)
-            print("Writing preprocessing recipe")
+            print("Writing preprocessing recipe.")
             tfs.to_excel(writer, sheet_name="Preprocessing Recipe")
+            print("Export completed.")
 
     def set_spc(self, data, orientation='infer'):
         """

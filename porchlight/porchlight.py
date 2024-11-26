@@ -392,7 +392,7 @@ class OOP:
 
         # Display a Message Box
         def _msgBox():
-            msg.showinfo('About Porchlight', 'Porchlight was created by Jakub Konkol and George Tsilomelekis.\nCheck us out at gtsilomelekis.com!')
+            msg.showinfo('About Porchlight', 'Porchlight was created by Jakub Konkol and George Tsilomelekis.\nCheck us out at gtsilomelekis.com!\n\nThis version: 1.1.1')
 
         # Add another Menu to the Menu Bar and an item
         help_menu = Menu(menu_bar, tearoff=0)
@@ -404,7 +404,7 @@ class OOP:
         if os.name == 'nt':
             import ctypes
             self.win.iconbitmap(os.path.join(resource_dir, 'porchlight.ico'))
-            myappid = 'Rutgers.Porchlight.1.0.0'  # arbitrary string
+            myappid = 'Rutgers.Porchlight.1.1.1'  # arbitrary string
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
         else:
             # weird linux hack from https://stackoverflow.com/questions/45361749/python-3-6-tkinter-window-icon-on-linux-error,
