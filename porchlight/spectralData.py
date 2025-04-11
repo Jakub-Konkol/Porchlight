@@ -553,6 +553,7 @@ class SpectralData(Sequence):
         self.wav = self.wav[(self.wav > start) & (self.wav < end)]
         self.spc = self.spc.transpose()
         self._baselines = self._baselines.transpose()
+        self.shape =self.spc.shape
 
     def invtrim(self, start=None, end=None, *args):
         """
@@ -584,6 +585,7 @@ class SpectralData(Sequence):
         self.wav = self.wav[(self.wav < start) | (self.wav > end)]
         self._baselines = self._baselines.transpose()
         self.spc = self.spc.transpose()
+        self.shape = self.spc.shape
 
     def area(self, *args):
         """
