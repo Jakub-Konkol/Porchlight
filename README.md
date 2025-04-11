@@ -88,4 +88,4 @@ This software has been developed by [Jakub Konkol](https://jakubkonkol.com/) of 
 [Dr. Tsilomelekis](https://www.gtsilomelekis.com/) group at Rutgers, the State University of New Jersey. 
 [Come see our research!](https://www.gtsilomelekis.com/)
 
-:copyright: 2021-2024 Rutgers, the State University of New Jersey
+:copyright: 2021-2025 Rutgers, the State University of New Jersey
