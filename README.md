@@ -4,6 +4,7 @@ Porchlight is a preprocessing aid for spectroscopists and for students to learn 
 
 ![Porchlight Logo](/repo-resources/porchlight.png)
 
+This program was published as part of the article [Porchlight: An Accessible and Interactive Aid in Preprocessing of Spectral Data](https://pubs.acs.org/doi/10.1021/acs.jchemed.2c00812).
 
 ## Features
 
