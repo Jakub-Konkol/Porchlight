@@ -29,7 +29,6 @@ class SpectralData(Sequence):
             self.spc = [0]
             self.wav = [0]
             self._baselines = []
-            self.shape = [0]
             self.tf_history = []
 
         else:
@@ -83,7 +82,6 @@ class SpectralData(Sequence):
             self._wav_raw = self.spc.columns[:]
             self.wav = self._wav_raw.copy(deep=True)
             self.war = pd.DataFrame(np.zeros((self.spc.shape[0])))
-            self.shape = self.spc.shape
             self._baselines = pd.DataFrame(np.zeros(self.spc.shape), columns=self.spc.columns, index=self.spc.index)
             # self.baseline = pd.DataFrame(np.zeros(self._spc_raw.shape), columns=self._wav_raw)
         super().__init__()
@@ -153,9 +151,12 @@ class SpectralData(Sequence):
 
         return temp
 
-
     def __len__(self):
         return self.shape[0]
+
+    @property
+    def shape(self):
+        return self.spc.shape
 
     def getDataFromFile(self, file):
         """
@@ -553,7 +554,6 @@ class SpectralData(Sequence):
         self.wav = self.wav[(self.wav > start) & (self.wav < end)]
         self.spc = self.spc.transpose()
         self._baselines = self._baselines.transpose()
-        self.shape =self.spc.shape
 
     def invtrim(self, start=None, end=None, *args):
         """
@@ -585,7 +585,6 @@ class SpectralData(Sequence):
         self.wav = self.wav[(self.wav < start) | (self.wav > end)]
         self._baselines = self._baselines.transpose()
         self.spc = self.spc.transpose()
-        self.shape = self.spc.shape
 
     def area(self, *args):
         """
